@@ -2089,8 +2089,7 @@ deactivate_cb (DBusGProxy *proxy,
 		g_warning ("%s: device %s deactivation failed: (%d) %s",
 		           __func__,
 		           nm_object_get_path (NM_OBJECT (info->device)),
-		           error ? error->code : -1,
-		           error && error->message ? error->message : "(unknown)");
+		           error->code, error->message);
 	}
 	g_clear_error (&error);
 

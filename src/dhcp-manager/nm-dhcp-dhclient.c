@@ -402,8 +402,7 @@ dhclient_start (NMDHCPClient *client,
 		if (!success) {
 			nm_log_warn (log_domain, "(%s): failed to save DUID to %s: (%d) %s.",
 			             iface, priv->lease_file,
-			             error ? error->code : -1,
-			             error && error->message ? error->message : "(unknown)");
+			             error->code, error->message);
 			return -1;
 		}
 	}
@@ -575,8 +574,7 @@ get_duid (NMDHCPClient *client)
 		if (error) {
 			nm_log_warn (LOGD_DHCP, "Failed to read leasefile '%s': (%d) %s",
 			             priv->def_leasefile,
-			             error ? error->code : -1,
-			             error ? error->message : "(unknown)");
+			             error->code, error->message);
 			g_clear_error (&error);
 		}
 	}

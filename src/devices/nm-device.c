@@ -2549,7 +2549,7 @@ aipd_start (NMDevice *self, NMDeviceStateReason *reason)
 		             "Activation (%s) Stage 3 of 5 (IP Configure Start) failed"
 		             " to start avahi-autoipd: %s",
 		             iface,
-		             error && error->message ? error->message : "(unknown)");
+		             error->message);
 		g_clear_error (&error);
 		aipd_cleanup (self);
 		return NM_ACT_STAGE_RETURN_FAILURE;
@@ -4343,8 +4343,7 @@ share_init (void)
 		if (!g_spawn_sync ("/", argv, envp, G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL,
 		                   share_child_setup, NULL, NULL, NULL, &status, &error)) {
 			nm_log_err (LOGD_SHARING, "error loading NAT module %s: (%d) %s",
-			            *iter, error ? error->code : 0,
-			            (error && error->message) ? error->message : "unknown");
+			            *iter, error->code, error->message);
 			if (error)
 				g_error_free (error);
 		}
@@ -4417,7 +4416,7 @@ start_sharing (NMDevice *self, NMIP4Config *config)
 	if (!nm_dnsmasq_manager_start (priv->dnsmasq_manager, config, &error)) {
 		nm_log_err (LOGD_SHARING, "(%s/%s): failed to start dnsmasq: %s",
 		            nm_device_get_iface (self), ip_iface,
-		            (error && error->message) ? error->message : "(unknown)");
+		            error->message);
 		g_error_free (error);
 		nm_act_request_set_shared (req, FALSE);
 		return FALSE;

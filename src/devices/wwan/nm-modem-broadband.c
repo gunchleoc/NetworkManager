@@ -184,7 +184,7 @@ connect_ready (MMModemSimple *simple_iface,
 
 			nm_log_warn (LOGD_MB, "(%s) failed to connect modem: %s",
 			             nm_modem_get_uid (NM_MODEM (self)),
-			             error && error->message ? error->message : "(unknown)");
+			             error->message);
 			g_signal_emit_by_name (self, NM_MODEM_PREPARE_RESULT, FALSE, translate_mm_error (error));
 		}
 
@@ -542,7 +542,7 @@ modem_disable_ready (MMModem *modem_iface,
 	} else {
 		nm_log_warn (LOGD_MB, "(%s) failed to disable modem: %s",
 		             nm_modem_get_uid (NM_MODEM (self)),
-		             error && error->message ? error->message : "(unknown)");
+		             error->message);
 		nm_modem_set_prev_state (NM_MODEM (self), "disable failed");
 		g_clear_error (&error);
 	}
@@ -561,7 +561,7 @@ modem_enable_ready (MMModem *modem_iface,
 	if (!mm_modem_enable_finish (modem_iface, res, &error)) {
 		nm_log_warn (LOGD_MB, "(%s) failed to enable modem: %s",
 		             nm_modem_get_uid (NM_MODEM (self)),
-		             error && error->message ? error->message : "(unknown)");
+		             error->message);
 		nm_modem_set_prev_state (NM_MODEM (self), "enable failed");
 		g_clear_error (&error);
 	}
@@ -712,7 +712,7 @@ simple_disconnect_ready (MMModemSimple *modem_iface,
 		if (ctx->warn)
 			nm_log_warn (LOGD_MB, "(%s) failed to disconnect modem: %s",
 			             nm_modem_get_uid (NM_MODEM (ctx->self)),
-			             error && error->message ? error->message : "(unknown)");
+			             error->message);
 		g_clear_error (&error);
 	}
 

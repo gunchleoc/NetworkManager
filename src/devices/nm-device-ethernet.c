@@ -205,7 +205,7 @@ _update_s390_subchannels (NMDeviceEthernet *self)
 	if (!dir) {
 		nm_log_warn (LOGD_DEVICE | LOGD_HW, "(%s): failed to open directory '%s': %s",
 		             iface, parent_path,
-		             error && error->message ? error->message : "(unknown)");
+		             error->message);
 		g_clear_error (&error);
 		goto out;
 	}

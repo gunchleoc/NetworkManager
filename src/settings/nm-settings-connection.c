@@ -703,7 +703,7 @@ new_secrets_commit_cb (NMSettingsConnection *connection,
 {
 	if (error) {
 		nm_log_warn (LOGD_SETTINGS, "Error saving new secrets to backing storage: (%d) %s",
-		             error->code, error->message ? error->message : "(unknown)");
+		             error->code, error->message);
 	}
 }
 
@@ -735,7 +735,7 @@ agent_secrets_done_cb (NMAgentManager *manager,
 		            setting_name,
 		            call_id,
 		            error->code,
-		            error->message ? error->message : "(unknown)");
+		            error->message);
 
 		callback (self, call_id, NULL, setting_name, error, callback_data);
 		return;
@@ -846,16 +846,16 @@ agent_secrets_done_cb (NMAgentManager *manager,
 			            nm_connection_get_uuid (NM_CONNECTION (self)),
 			            setting_name,
 			            call_id,
-			            local ? local->code : -1,
-			            (local && local->message) ? local->message : "(unknown)");
+			            local->code,
+			            local->message);
 		}
 	} else {
 		nm_log_dbg (LOGD_SETTINGS, "(%s/%s:%u) failed to update with existing secrets: (%d) %s",
 		            nm_connection_get_uuid (NM_CONNECTION (self)),
 		            setting_name,
 		            call_id,
-		            local ? local->code : -1,
-		            (local && local->message) ? local->message : "(unknown)");
+		            local->code,
+		            local->message);
 	}
 
 	callback (self, call_id, agent_username, setting_name, local, callback_data);
@@ -991,7 +991,7 @@ pk_auth_cb (NMAuthChain *chain,
 		error = g_error_new (NM_SETTINGS_ERROR,
 		                     NM_SETTINGS_ERROR_GENERAL,
 		                     "Error checking authorization: %s",
-		                     chain_error->message ? chain_error->message : "(unknown)");
+		                     chain_error->message);
 	} else if (result != NM_AUTH_CALL_RESULT_YES) {
 		error = g_error_new_literal (NM_SETTINGS_ERROR,
 		                             NM_SETTINGS_ERROR_PERMISSION_DENIED,

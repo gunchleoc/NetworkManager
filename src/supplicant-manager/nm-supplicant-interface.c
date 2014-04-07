@@ -528,7 +528,7 @@ iface_get_props_cb (DBusGProxy *proxy, DBusGProxyCall *call_id, gpointer user_da
 		g_hash_table_destroy (props);
 	} else {
 		nm_log_warn (LOGD_SUPPLICANT, "could not get interface properties: %s.",
-		             error && error->message ? error->message : "(unknown)");
+		             error->message);
 		g_clear_error (&error);
 	}
 	iface_check_ready (self);
@@ -938,7 +938,7 @@ remove_network_cb (DBusGProxy *proxy, DBusGProxyCall *call_id, gpointer user_dat
 
 	if (!dbus_g_proxy_end_call (proxy, call_id, &error, G_TYPE_INVALID)) {
 		nm_log_dbg (LOGD_SUPPLICANT, "Couldn't remove network from supplicant interface: %s.",
-		             error && error->message ? error->message : "(unknown)");
+		            error->message);
 		g_clear_error (&error);
 	}
 }
@@ -950,7 +950,7 @@ disconnect_cb  (DBusGProxy *proxy, DBusGProxyCall *call_id, gpointer user_data)
 
 	if (!dbus_g_proxy_end_call (proxy, call_id, &error, G_TYPE_INVALID)) {
 		nm_log_warn (LOGD_SUPPLICANT, "Couldn't disconnect supplicant interface: %s.",
-		             error && error->message ? error->message : "(unknown)");
+		             error->message);
 		g_clear_error (&error);
 	}
 }

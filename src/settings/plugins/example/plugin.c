@@ -159,8 +159,7 @@ read_connections (NMSystemConfigInterface *config)
 	if (!dir) {
 		nm_log_warn (LOGD_SETTINGS, "Cannot read directory '%s': (%d) %s",
 		             EXAMPLE_DIR,
-		             error ? error->code : -1,
-		             error && error->message ? error->message : "(unknown)");
+		             error->code, error->message);
 		g_clear_error (&error);
 		return;
 	}
@@ -179,10 +178,9 @@ read_connections (NMSystemConfigInterface *config)
 			nm_log_info (LOGD_SETTINGS, "    read connection '%s'",
 			             nm_connection_get_id (NM_CONNECTION (connection)));
 		} else {
-			nm_log_info (LOGD_SETTINGS, "    error: %s",
-			             (error && error->message) ? error->message : "(unknown)");
+			nm_log_info (LOGD_SETTINGS, "    error: %s", error->message);
+			g_clear_error (&error);
 		}
-		g_clear_error (&error);
 		g_free (full_path);
 	}
 	g_dir_close (dir);
@@ -200,9 +198,9 @@ update_connection_settings_commit_cb (NMSettingsConnection *orig, GError *error,
 	if (error) {
 		nm_log_warn (LOGD_SETTINGS, "%s: '%s' / '%s' invalid: %d",
 		             __func__,
-		             error ? g_type_name (nm_connection_lookup_setting_type_by_quark (error->domain)) : "(none)",
-		             (error && error->message) ? error->message : "(none)",
-		             error ? error->code : -1);
+		             g_type_name (nm_connection_lookup_setting_type_by_quark (error->domain)),
+		             error->message,
+		             error->code);
 		g_clear_error (&error);
 
 		nm_settings_connection_signal_remove (orig);
@@ -319,11 +317,10 @@ dir_changed (GFileMonitor *monitor,
 				 * becomes valid again later we'll get another change
 				 * notification, we'll re-read it, and we'll treat it as new.
 				 */
-				nm_log_info (LOGD_SETTINGS, "    error: %s",
-				             (error && error->message) ? error->message : "(unknown)");
+				nm_log_info (LOGD_SETTINGS, "    error: %s", error->message);
 				remove_connection (SC_PLUGIN_EXAMPLE (config), connection, full_path);
+				g_clear_error (&error);
 			}
-			g_clear_error (&error);
 		} else {
 			nm_log_info (LOGD_SETTINGS, "updating %s", full_path);
 
@@ -370,7 +367,7 @@ dir_changed (GFileMonitor *monitor,
 					g_signal_emit_by_name (config, NM_SYSTEM_CONFIG_INTERFACE_CONNECTION_ADDED, connection);
 				}
 			} else {
-				nm_log_info (LOGD_SETTINGS, "    error: %s", (error && error->message) ? error->message : "(unknown)");
+				nm_log_info (LOGD_SETTINGS, "    error: %s", error->message);
 				g_clear_error (&error);
 			}
 		}

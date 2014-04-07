@@ -246,8 +246,7 @@ pan_connection_check_create (NMBluezDevice *self)
 		nm_log_dbg (LOGD_BT, "bluez[%s] added new Bluetooth connection for NAP device: '%s' (%s)", priv->path, id, uuid);
 	} else {
 		nm_log_warn (LOGD_BT, "bluez[%s] couldn't add new Bluetooth connection for NAP device: '%s' (%s): %d / %s",
-		             priv->path, id, uuid, error ? error->code : -1,
-		             (error && error->message) ? error->message : "(unknown)");
+		             priv->path, id, uuid, error->code, error->message);
 		g_clear_error (&error);
 
 		g_object_unref (connection);
@@ -812,7 +811,7 @@ get_properties_cb_4 (GObject *source_object, GAsyncResult *res, gpointer user_da
 	v_properties = g_dbus_proxy_call_finish (priv->proxy, res, &err);
 	if (!v_properties) {
 		nm_log_warn (LOGD_BT, "bluez[%s] error getting device properties: %s",
-		             priv->path, err && err->message ? err->message : "(unknown)");
+		             priv->path, err->message);
 		g_error_free (err);
 		g_signal_emit (self, signals[INITIALIZED], 0, FALSE);
 		goto END;

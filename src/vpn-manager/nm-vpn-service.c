@@ -215,12 +215,11 @@ nm_vpn_service_daemon_exec (NMVPNService *service, GError **error)
 	} else {
 		nm_log_warn (LOGD_VPN, "VPN service '%s': could not launch the VPN service. error: (%d) %s.",
 		             priv->name,
-		             spawn_error ? spawn_error->code : -1,
-		             spawn_error && spawn_error->message ? spawn_error->message : "(unknown)");
+		             spawn_error->code, spawn_error->message);
 
 		g_set_error (error,
 		             NM_VPN_MANAGER_ERROR, NM_VPN_MANAGER_ERROR_SERVICE_START_FAILED,
-		             "%s", spawn_error ? spawn_error->message : "unknown g_spawn_async() error");
+		             "%s", spawn_error->message);
 
 		nm_vpn_service_stop_connections (service, FALSE, NM_VPN_CONNECTION_STATE_REASON_SERVICE_START_FAILED);
 		if (spawn_error)

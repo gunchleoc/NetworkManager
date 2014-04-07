@@ -289,7 +289,7 @@ connection_new_or_changed (SCPluginIfcfg *self,
 	if (!new) {
 		/* errors reading connection; remove it */
 		if (!ignore_error)
-			nm_log_warn (LOGD_SETTINGS, "    %s", (error && error->message) ? error->message : "(unknown)");
+			nm_log_warn (LOGD_SETTINGS, "    %s", error->message);
 		g_clear_error (&error);
 
 		nm_log_info (LOGD_SETTINGS, "removed %s.", path);

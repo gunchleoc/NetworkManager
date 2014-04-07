@@ -199,8 +199,7 @@ get_properties_cb (DBusGProxy *proxy, DBusGProxyCall *call, gpointer user_data)
 	if (!dbus_g_proxy_end_call (proxy, call, &err,
 	                            DBUS_TYPE_G_MAP_OF_VARIANT, &properties,
 	                            G_TYPE_INVALID)) {
-		nm_log_warn (LOGD_BT, "bluez error getting adapter properties: %s",
-		             err && err->message ? err->message : "(unknown)");
+		nm_log_warn (LOGD_BT, "bluez error getting adapter properties: %s", err->message);
 		g_error_free (err);
 		goto done;
 	}

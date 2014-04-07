@@ -1023,8 +1023,7 @@ auto_activate_device (gpointer user_data)
 		                                     &error)) {
 			nm_log_info (LOGD_DEVICE, "Connection '%s' auto-activation failed: (%d) %s",
 			             nm_connection_get_id (best_connection),
-			             error ? error->code : -1,
-			             error ? error->message : "(none)");
+			             error->code, error->message);
 			g_error_free (error);
 		}
 		g_object_unref (subject);
@@ -1401,8 +1400,7 @@ activate_secondary_connections (NMPolicy *policy,
 		else {
 			nm_log_warn (LOGD_DEVICE, "Secondary connection '%s (%s)' auto-activation failed: (%d) %s",
 			             nm_connection_get_id (NM_CONNECTION (settings_con)), sec_uuid,
-			             error ? error->code : 0,
-			             (error && error->message) ? error->message : "unknown");
+			             error->code, error->message);
 			g_clear_error (&error);
 			success = FALSE;
 			break;
@@ -1989,8 +1987,7 @@ _deactivate_if_active (NMManager *manager, NMConnection *connection)
 			                                       &error)) {
 				nm_log_warn (LOGD_DEVICE, "Connection '%s' disappeared, but error deactivating it: (%d) %s",
 					         nm_connection_get_id (connection),
-					         error ? error->code : -1,
-					         error ? error->message : "(unknown)");
+				             error->code, error->message);
 				g_clear_error (&error);
 			}
 		}

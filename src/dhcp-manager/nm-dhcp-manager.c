@@ -546,7 +546,7 @@ nm_dhcp_manager_test_ip4_options_to_config (const char *dhcp_client,
 
 	client_type = get_client_type (dhcp_client, &error);
 	if (!client_type) {
-		nm_log_err (LOGD_DHCP4, "error: %s", error ? error->message : "(unknown)");
+		nm_log_err (LOGD_DHCP4, "error: %s", error->message);
 		g_clear_error (&error);
 		return NULL;
 	}

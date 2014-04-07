@@ -364,7 +364,7 @@ write_object (NMSetting8021x *s_8021x,
 			g_set_error (error, IFCFG_PLUGIN_ERROR, 0,
 			             "Could not write certificate/key for %s / %s: %s",
 			             NM_SETTING_802_1X_SETTING_NAME, objtype->setting_key,
-			             (write_error && write_error->message) ? write_error->message : "(unknown)");
+			             write_error->message);
 			g_clear_error (&write_error);
 		}
 		g_free (new_file);
@@ -2122,9 +2122,11 @@ write_ip4_setting (NMConnection *connection, shvarFile *ifcfg, GError **error)
 		}
 		svCloseFile (routefile);
 	} else {
-		write_route_file_legacy (route_path, s_ip4, error);
+		gboolean wrote_legacy_file;
+
+		wrote_legacy_file = write_route_file_legacy (route_path, s_ip4, error);
 		g_free (route_path);
-		if (error && *error)
+		if (!wrote_legacy_file)
 			goto out;
 	}
 
@@ -2306,6 +2308,7 @@ write_ip6_setting (NMConnection *connection, shvarFile *ifcfg, GError **error)
 	const struct in6_addr *ip;
 	GString *ip_str1, *ip_str2, *ip_ptr;
 	char *route6_path;
+	gboolean wrote_route6_file;
 
 	s_ip6 = nm_connection_get_setting_ip6_config (connection);
 	if (!s_ip6) {
@@ -2471,9 +2474,9 @@ write_ip6_setting (NMConnection *connection, shvarFile *ifcfg, GError **error)
 		             "Could not get route6 file path for '%s'", ifcfg->fileName);
 		goto error;
 	}
-	write_route6_file (route6_path, s_ip6, error);
+	wrote_route6_file = write_route6_file (route6_path, s_ip6, error);
 	g_free (route6_path);
-	if (error && *error)
+	if (!wrote_route6_file)
 		goto error;
 
 	return TRUE;

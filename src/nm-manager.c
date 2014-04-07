@@ -1604,7 +1604,7 @@ get_existing_connection (NMManager *manager, NMDevice *device)
 		nm_log_warn (LOGD_SETTINGS, "(%s) Couldn't save generated connection '%s': %s",
 		             nm_device_get_iface (device),
 		             nm_connection_get_id (connection),
-		             (error && error->message) ? error->message : "(unknown)");
+		             error->message);
 		g_clear_error (&error);
 	}
 	g_object_unref (connection);
@@ -1893,7 +1893,7 @@ load_device_factories (NMManager *self)
 	if (!dir) {
 		nm_log_warn (LOGD_HW, "Failed to open plugin directory %s: %s",
 		             NMPLUGINDIR,
-		             (error && error->message) ? error->message : "(unknown)");
+		             error->message);
 		g_clear_error (&error);
 		return;
 	}
@@ -1954,7 +1954,7 @@ load_device_factories (NMManager *self)
 		factory = create_func (&error);
 		if (!factory) {
 			nm_log_warn (LOGD_HW, "(%s): failed to initialize device factory: %s",
-			             item, error ? error->message : "unknown");
+			             item, error->message);
 			g_clear_error (&error);
 			g_module_close (plugin);
 			continue;
@@ -2015,8 +2015,7 @@ platform_link_added (NMManager *self,
 		if (error) {
 			nm_log_warn (LOGD_HW, "%s: factory failed to create device: (%d) %s",
 			             plink->udi,
-			             error ? error->code : -1,
-			             error ? error->message : "(unknown)");
+			             error->code, error->message);
 			g_clear_error (&error);
 			return;
 		}
@@ -3734,8 +3733,8 @@ _internal_enable (NMManager *self, gboolean enable)
 			/* Not a hard error */
 			nm_log_warn (LOGD_SUSPEND, "writing to state file %s failed: (%d) %s.",
 			             priv->state_file,
-			             err ? err->code : -1,
-			             (err && err->message) ? err->message : "unknown");
+			             err->code,
+			             err->message);
 		}
 	}
 
@@ -4498,8 +4497,7 @@ manager_radio_user_toggled (NMManager *self,
 		                                &error)) {
 			nm_log_warn (LOGD_CORE, "writing to state file %s failed: (%d) %s.",
 			             priv->state_file,
-			             error ? error->code : -1,
-			             (error && error->message) ? error->message : "unknown");
+			             error->code, error->message);
 			g_clear_error (&error);
 		}
 	}

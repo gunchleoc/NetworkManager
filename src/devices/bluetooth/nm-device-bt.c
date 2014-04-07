@@ -504,8 +504,7 @@ modem_ip4_config_result (NMModem *self,
 		nm_log_warn (LOGD_MB | LOGD_IP4 | LOGD_BT,
 		             "(%s): retrieving IP4 configuration failed: (%d) %s",
 		             nm_device_get_ip_iface (device),
-		             error ? error->code : -1,
-		             error && error->message ? error->message : "(unknown)");
+		             error->code, error->message);
 
 		nm_device_state_changed (device, NM_DEVICE_STATE_FAILED, NM_DEVICE_STATE_REASON_IP_CONFIG_UNAVAILABLE);
 	} else
@@ -752,7 +751,7 @@ bluez_connect_cb (GObject *object,
 
 	if (!device) {
 		nm_log_warn (LOGD_BT, "Error connecting with bluez: %s",
-		             error && error->message ? error->message : "(unknown)");
+		             error->message);
 		g_clear_error (&error);
 
 		nm_device_state_changed (NM_DEVICE (self),

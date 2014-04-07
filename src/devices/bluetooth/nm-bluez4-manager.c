@@ -178,8 +178,7 @@ default_adapter_cb (DBusGProxy *proxy, DBusGProxyCall *call, gpointer user_data)
 		if (   !dbus_g_error_has_name (err, "org.bluez.Error.NoSuchAdapter")
 		    && !dbus_g_error_has_name (err, "org.freedesktop.systemd1.LoadFailed")
 		    && !g_error_matches (err, DBUS_GERROR, DBUS_GERROR_SERVICE_UNKNOWN)) {
-			nm_log_warn (LOGD_BT, "bluez error getting default adapter: %s",
-			             err && err->message ? err->message : "(unknown)");
+			nm_log_warn (LOGD_BT, "bluez error getting default adapter: %s", err->message);
 		}
 		g_error_free (err);
 		return;

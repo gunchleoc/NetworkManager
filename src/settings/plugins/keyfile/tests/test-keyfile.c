@@ -652,7 +652,7 @@ test_write_wired_connection (void)
 	success = nm_keyfile_plugin_write_test_connection (connection, TEST_SCRATCH_DIR, owner_uid, owner_grp, &testfile, &error);
 	ASSERT (success == TRUE,
 			"connection-write", "failed to write keyfile: %s",
-			error ? error->message : "(none)");
+			error->message);
 
 	ASSERT (testfile != NULL,
 			"connection-write", "didn't get keyfile name back after writing connection");
@@ -856,7 +856,7 @@ test_write_ip6_wired_connection (void)
 	success = nm_keyfile_plugin_write_test_connection (connection, TEST_SCRATCH_DIR, owner_uid, owner_grp, &testfile, &error);
 	ASSERT (success == TRUE,
 			"connection-write", "failed to write keyfile: %s",
-			error ? error->message : "(none)");
+			error->message);
 
 	ASSERT (testfile != NULL,
 			"connection-write", "didn't get keyfile name back after writing connection");
@@ -1240,7 +1240,7 @@ test_write_wireless_connection (void)
 	success = nm_keyfile_plugin_write_test_connection (connection, TEST_SCRATCH_DIR, owner_uid, owner_grp, &testfile, &error);
 	ASSERT (success == TRUE,
 			"connection-write", "failed to write keyfile: %s",
-			error ? error->message : "(none)");
+			error->message);
 
 	ASSERT (testfile != NULL,
 			"connection-write", "didn't get keyfile name back after writing connection");
@@ -1356,7 +1356,7 @@ test_write_string_ssid (void)
 	success = nm_keyfile_plugin_write_test_connection (connection, TEST_SCRATCH_DIR, owner_uid, owner_grp, &testfile, &error);
 	ASSERT (success == TRUE,
 			"connection-write", "failed to write keyfile: %s",
-			error ? error->message : "(none)");
+			error->message);
 
 	ASSERT (testfile != NULL,
 			"connection-write", "didn't get keyfile name back after writing connection");
@@ -1989,7 +1989,7 @@ test_write_bt_dun_connection (void)
 	success = nm_keyfile_plugin_write_test_connection (connection, TEST_SCRATCH_DIR, owner_uid, owner_grp, &testfile, &error);
 	ASSERT (success == TRUE,
 			"connection-write", "failed to write keyfile: %s",
-			error ? error->message : "(none)");
+			error->message);
 
 	ASSERT (testfile != NULL,
 			"connection-write", "didn't get keyfile name back after writing connection");
@@ -2224,7 +2224,7 @@ test_write_gsm_connection (void)
 	success = nm_keyfile_plugin_write_test_connection (connection, TEST_SCRATCH_DIR, owner_uid, owner_grp, &testfile, &error);
 	ASSERT (success == TRUE,
 			"connection-write", "failed to write keyfile: %s",
-			error ? error->message : "(none)");
+			error->message);
 
 	ASSERT (testfile != NULL,
 			"connection-write", "didn't get keyfile name back after writing connection");

@@ -1913,10 +1913,11 @@ nmc_activate_connection (NmCli *nmc,
 		/* Virtual connection may not have their interfaces created yet */
 		if (!device_found && !is_connection_virtual (connection)) {
 			g_set_error (error, NMCLI_ERROR, NMC_RESULT_ERROR_CON_ACTIVATION,
-				     "%s", local && local->message ? local->message : _("unknown error"));
+			             "%s", local->message);
 			g_clear_error (&local);
 			return FALSE;
 		}
+		g_clear_error (&local);
 	} else if (ifname) {
 		device = nm_client_get_device_by_iface (nmc->client, ifname);
 		if (!device) {
@@ -2043,8 +2044,8 @@ do_connection_up (NmCli *nmc, int argc, char **argv)
 
 	if (!nmc_activate_connection (nmc, connection, ifname, ap, nsp, activate_connection_cb, &error)) {
 		g_string_printf (nmc->return_text, _("Error: %s."),
-		                 error ? error->message : _("unknown error"));
-		nmc->return_value = error ? error->code : NMC_RESULT_ERROR_CON_ACTIVATION;
+		                 error->message);
+		nmc->return_value = error->code;
 		g_clear_error (&error);
 		goto error;
 	}

@@ -299,31 +299,31 @@ test_new_connection ()
 	g_test_assert_expected_messages ();
 	ASSERT (connection != NULL, "new connection",
 		"new connection failed: %s",
-		error ? error->message : "None");
+		error->message);
 	g_object_unref (connection);
 
 	connection = ifnet_update_connection_from_config_block ("qiaomuf", NULL, &error);
 	ASSERT (connection != NULL, "new connection",
 		"new connection failed: %s",
-		error ? error->message : "NONE");
+		error->message);
 	g_object_unref (connection);
 
 	connection = ifnet_update_connection_from_config_block ("myxjtu2", NULL, &error);
 	ASSERT (connection != NULL, "new connection",
 		"new connection failed: %s",
-		error ? error->message : "NONE");
+		error->message);
 	g_object_unref (connection);
 
 	connection = ifnet_update_connection_from_config_block ("eth9", NULL, &error);
 	ASSERT (connection != NULL, "new connection",
 		"new connection(eth9) failed: %s",
-		error ? error->message : "NONE");
+		error->message);
 	g_object_unref (connection);
 
 	connection = ifnet_update_connection_from_config_block ("eth10", NULL, &error);
 	ASSERT (connection != NULL, "new connection",
 		"new connection(eth10) failed: %s",
-		error ? error->message : "NONE");
+		error->message);
 	g_object_unref (connection);
 }
 
@@ -351,7 +351,7 @@ test_update_connection (const char *basepath)
 	connection = ifnet_update_connection_from_config_block ("eth0", basepath, &error);
 	ASSERT (connection != NULL, "get connection",
 		"get connection failed: %s",
-		error ? error->message : "None");
+		error->message);
 
 	success = ifnet_update_parsers_by_connection (connection, "eth0",
 	                                              NET_GEN_NAME,
@@ -365,7 +365,7 @@ test_update_connection (const char *basepath)
 
 	connection = ifnet_update_connection_from_config_block ("0xab3ace", basepath, &error);
 	ASSERT (connection != NULL, "get connection", "get connection failed: %s",
-		error ? error->message : "None");
+		error->message);
 
 	success = ifnet_update_parsers_by_connection (connection, "0xab3ace",
 	                                              NET_GEN_NAME,
@@ -418,7 +418,7 @@ test_delete_connection ()
 	connection = ifnet_update_connection_from_config_block ("eth7", NULL, &error);
 	ASSERT (connection != NULL, "get connection",
 	        "get connection failed: %s",
-	        error ? error->message : "None");
+	        error->message);
 	ASSERT (ifnet_delete_connection_in_parsers ("eth7", NET_GEN_NAME, SUP_GEN_NAME, &backup),
 	        "delete connection", "delete connection failed: %s", "eth7");
 	kill_backup (&backup);
@@ -427,7 +427,7 @@ test_delete_connection ()
 	connection = ifnet_update_connection_from_config_block ("qiaomuf", NULL, &error);
 	ASSERT (connection != NULL, "get connection",
 	        "get connection failed: %s",
-	        error ? error->message : "None");
+	        error->message);
 	ASSERT (ifnet_delete_connection_in_parsers ("qiaomuf", NET_GEN_NAME, SUP_GEN_NAME, &backup),
 	        "delete connection", "delete connection failed: %s", "qiaomuf");
 	kill_backup (&backup);

@@ -129,7 +129,8 @@ make_tls_connection (const char *detail, NMSetting8021xCKScheme scheme)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        detail, "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
+	g_clear_error (&error);
 
 	return connection;
 }
@@ -297,7 +298,7 @@ make_tls_phase2_connection (const char *detail, NMSetting8021xCKScheme scheme)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        detail, "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	return connection;
 }

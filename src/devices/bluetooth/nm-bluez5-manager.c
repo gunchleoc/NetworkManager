@@ -220,7 +220,7 @@ get_managed_objects_cb (GDBusProxy *proxy,
 			nm_log_warn (LOGD_BT, "Couldn't get managed objects: not running Bluez5?");
 		else {
 			nm_log_warn (LOGD_BT, "Couldn't get managed objects: %s",
-				         error && error->message ? error->message : "(unknown)");
+				         error->message);
 		}
 		g_clear_error (&error);
 		return;
@@ -248,7 +248,7 @@ on_proxy_acquired (GObject *object,
 
 	if (!priv->proxy) {
 		nm_log_warn (LOGD_BT, "Couldn't acquire object manager proxy: %s",
-		             error && error->message ? error->message : "(unknown)");
+		             error->message);
 		g_clear_error (&error);
 		return;
 	}

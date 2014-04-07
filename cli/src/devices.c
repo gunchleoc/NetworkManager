@@ -1339,7 +1339,7 @@ connect_device_cb (NMClient *client, NMActiveConnection *active, GError *error, 
 
 	if (error) {
 		g_string_printf (nmc->return_text, _("Error: Device activation failed: %s"),
-		                 error->message ? error->message : _("(unknown)"));
+		                 error->message);
 		nmc->return_value = NMC_RESULT_ERROR_CON_ACTIVATION;
 		quit ();
 	} else {
@@ -1481,7 +1481,7 @@ disconnect_device_cb (NMDevice *device, GError *error, gpointer user_data)
 		g_string_printf (nmc->return_text, _("Error: Device '%s' (%s) disconnecting failed: %s"),
 		                 nm_device_get_iface (device),
 		                 nm_object_get_path (NM_OBJECT (device)),
-		                 error->message ? error->message : _("(unknown)"));
+		                 error->message);
 		nmc->return_value = NMC_RESULT_ERROR_DEV_DISCONNECT;
 		quit ();
 	} else {
@@ -2266,8 +2266,7 @@ request_rescan_cb (NMDeviceWifi *device, GError *error, gpointer user_data)
 	NmCli *nmc = (NmCli *) user_data;
 
 	if (error) {
-		g_string_printf (nmc->return_text, _("Error: %s."),
-		                 error->message ? error->message : _("unknown"));
+		g_string_printf (nmc->return_text, _("Error: %s."), error->message);
 		nmc->return_value = NMC_RESULT_ERROR_UNKNOWN;
 	}
 	quit ();

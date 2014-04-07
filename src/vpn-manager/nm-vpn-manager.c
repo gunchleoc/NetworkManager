@@ -153,8 +153,7 @@ try_add_service (NMVPNManager *self, const char *namefile)
 	} else {
 		nm_log_warn (LOGD_VPN, "failed to load VPN service file %s: (%d) %s",
 		             namefile,
-		             error ? error->code : -1,
-		             error && error->message ? error->message : "(unknown)");
+		             error->code, error->message);
 		g_clear_error (&error);
 	}
 }

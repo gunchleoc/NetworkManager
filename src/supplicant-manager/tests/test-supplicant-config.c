@@ -169,7 +169,7 @@ test_wifi_open (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wifi-open", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	config = nm_supplicant_config_new ();
 
@@ -280,7 +280,7 @@ test_wifi_wep_key (const char *detail,
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        detail, "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	config = nm_supplicant_config_new ();
 
@@ -429,7 +429,7 @@ test_wifi_wpa_psk (const char *detail,
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        detail, "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	config = nm_supplicant_config_new ();
 

@@ -499,8 +499,7 @@ main (int argc, char *argv[])
 	config = nm_config_new (&error);
 	if (config == NULL) {
 		fprintf (stderr, _("Failed to read configuration: (%d) %s\n"),
-		         error ? error->code : -1,
-		         (error && error->message) ? error->message : _("unknown"));
+		         error->code, error->message);
 		exit (1);
 	}
 
@@ -527,8 +526,7 @@ main (int argc, char *argv[])
 	if (!parse_state_file (state_file, &net_enabled, &wifi_enabled, &wwan_enabled, &wimax_enabled, &error)) {
 		fprintf (stderr, _("State file %s parsing failed: (%d) %s\n"),
 		         state_file,
-		         error ? error->code : -1,
-		         (error && error->message) ? error->message : _("unknown"));
+		         error->code, error->message);
 		/* Not a hard failure */
 	}
 	g_clear_error (&error);
@@ -609,8 +607,7 @@ main (int argc, char *argv[])
 
 	settings = nm_settings_new (&error);
 	if (!settings) {
-		nm_log_err (LOGD_CORE, "failed to initialize settings storage: %s",
-		            error && error->message ? error->message : "(unknown)");
+		nm_log_err (LOGD_CORE, "failed to initialize settings storage: %s", error->message);
 		goto done;
 	}
 
@@ -622,8 +619,7 @@ main (int argc, char *argv[])
 	                          wimax_enabled,
 	                          &error);
 	if (manager == NULL) {
-		nm_log_err (LOGD_CORE, "failed to initialize the network manager: %s",
-		            error && error->message ? error->message : "(unknown)");
+		nm_log_err (LOGD_CORE, "failed to initialize the network manager: %s", error->message);
 		goto done;
 	}
 

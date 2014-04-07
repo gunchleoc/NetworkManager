@@ -540,7 +540,7 @@ nm_auth_uid_in_acl (NMConnection *connection,
 		if (out_error_desc) {
 			*out_error_desc = g_strdup_printf ("No session found for uid %lu (%s)",
 			                                   uid,
-			                                   local && local->message ? local->message : "unknown");
+			                                   local->message);
 		}
 		g_clear_error (&local);
 		return FALSE;

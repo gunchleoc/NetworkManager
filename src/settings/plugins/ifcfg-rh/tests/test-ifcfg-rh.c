@@ -6819,7 +6819,7 @@ test_write_wired_static (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wired-static-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -6828,7 +6828,7 @@ test_write_wired_static (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "wired-static-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "wired-static-write", "didn't get ifcfg file path back after writing connection");
@@ -6933,7 +6933,7 @@ test_write_wired_dhcp (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wired-dhcp-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* IP6 setting */
 	s_ip6 = (NMSettingIP6Config *) nm_setting_ip6_config_new ();
@@ -6951,7 +6951,7 @@ test_write_wired_dhcp (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "wired-dhcp-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "wired-dhcp-write", "didn't get ifcfg file path back after writing connection");
@@ -7181,7 +7181,7 @@ test_write_wired_static_ip6_only (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wired-static-ip6-only-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -7190,7 +7190,7 @@ test_write_wired_static_ip6_only (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "wired-static-ip6-only-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "wired-static-ip6-only-write", "didn't get ifcfg file path back after writing connection");
@@ -7495,7 +7495,7 @@ test_read_write_static_routes_legacy (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "read-write-static-routes-legacy-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "read-write-static-routes-legacy-write", "didn't get ifcfg file path back after writing connection");
@@ -7661,7 +7661,7 @@ test_write_wired_static_routes (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wired-static-routes-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -7670,7 +7670,7 @@ test_write_wired_static_routes (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "wired-static-routes-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "wired-static-routes-write", "didn't get ifcfg file path back after writing connection");
@@ -7789,11 +7789,11 @@ test_write_wired_dhcp_8021x_peap_mschapv2 (void)
 	                                         &error);
 	ASSERT (success == TRUE,
 	        "wired-dhcp-8021x-peap-mschapv2write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wired-dhcp-8021x-peap-mschapv2write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -7802,7 +7802,7 @@ test_write_wired_dhcp_8021x_peap_mschapv2 (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "wired-dhcp-8021x-peap-mschapv2write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "wired-dhcp-8021x-peap-mschapv2write", "didn't get ifcfg file path back after writing connection");
@@ -8158,7 +8158,7 @@ test_write_wired_aliases (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wired-aliases-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Create some pre-existing alias files, to make sure they get overwritten / deleted. */
 	ifcfg = svCreateFile (TEST_SCRATCH_ALIAS_BASE ":2");
@@ -8184,7 +8184,7 @@ test_write_wired_aliases (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "wired-aliases-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "wired-aliases-write", "didn't get ifcfg file path back after writing connection");
@@ -8368,7 +8368,7 @@ test_write_wifi_open (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wifi-open-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -8377,7 +8377,7 @@ test_write_wifi_open (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "wifi-open-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "wifi-open-write", "didn't get ifcfg file path back after writing connection");
@@ -8500,7 +8500,7 @@ test_write_wifi_open_hex_ssid (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wifi-open-hex-ssid-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -8509,7 +8509,7 @@ test_write_wifi_open_hex_ssid (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "wifi-open-hex-ssid-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "wifi-open-hex-ssid-write", "didn't get ifcfg file path back after writing connection");
@@ -8631,7 +8631,7 @@ test_write_wifi_wep (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wifi-wep-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -8640,7 +8640,7 @@ test_write_wifi_wep (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "wifi-wep-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "wifi-wep-write", "didn't get ifcfg file path back after writing connection");
@@ -8782,7 +8782,7 @@ test_write_wifi_wep_adhoc (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wifi-wep-adhoc-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -8791,7 +8791,7 @@ test_write_wifi_wep_adhoc (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "wifi-wep-adhoc-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "wifi-wep-adhoc-write", "didn't get ifcfg file path back after writing connection");
@@ -8923,7 +8923,7 @@ test_write_wifi_wep_passphrase (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wifi-wep-passphrase-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -8932,7 +8932,7 @@ test_write_wifi_wep_passphrase (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "wifi-wep-passphrase-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "wifi-wep-passphrase-write", "didn't get ifcfg file path back after writing connection");
@@ -9066,7 +9066,7 @@ test_write_wifi_wep_40_ascii (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wifi-wep-40-ascii-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -9075,7 +9075,7 @@ test_write_wifi_wep_40_ascii (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "wifi-wep-40-ascii-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "wifi-wep-40-ascii-write", "didn't get ifcfg file path back after writing connection");
@@ -9209,7 +9209,7 @@ test_write_wifi_wep_104_ascii (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wifi-wep-104-ascii-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -9218,7 +9218,7 @@ test_write_wifi_wep_104_ascii (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "wifi-wep-104-ascii-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "wifi-wep-104-ascii-write", "didn't get ifcfg file path back after writing connection");
@@ -9349,7 +9349,7 @@ test_write_wifi_leap (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wifi-leap-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -9358,7 +9358,7 @@ test_write_wifi_leap (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "wifi-leap-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "wifi-leap-write", "didn't get ifcfg file path back after writing connection");
@@ -9644,7 +9644,7 @@ test_write_wifi_wpa_psk (const char *name,
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        test_name, "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -9653,7 +9653,7 @@ test_write_wifi_wpa_psk (const char *name,
 	                                 &error);
 	ASSERT (success == TRUE,
 	        test_name, "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        test_name, "didn't get ifcfg file path back after writing connection");
@@ -9795,7 +9795,7 @@ test_write_wifi_wpa_psk_adhoc (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wifi-wpa-psk-adhoc-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -9804,7 +9804,7 @@ test_write_wifi_wpa_psk_adhoc (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "wifi-wpa-psk-adhoc-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "wifi-wpa-psk-adhoc-write", "didn't get ifcfg file path back after writing connection");
@@ -9961,7 +9961,7 @@ test_write_wifi_wpa_eap_tls (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wifi-wpa-eap-tls-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -9970,7 +9970,7 @@ test_write_wifi_wpa_eap_tls (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "wifi-wpa-eap-tls-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "wifi-wpa-eap-tls-write", "didn't get ifcfg file path back after writing connection");
@@ -10145,7 +10145,7 @@ test_write_wifi_wpa_eap_ttls_tls (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wifi-wpa-eap-ttls-tls-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -10154,7 +10154,7 @@ test_write_wifi_wpa_eap_ttls_tls (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "wifi-wpa-eap-ttls-tls-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "wifi-wpa-eap-ttls-tls-write", "didn't get ifcfg file path back after writing connection");
@@ -10301,7 +10301,7 @@ test_write_wifi_wpa_eap_ttls_mschapv2 (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wifi-wpa-eap-ttls-mschapv2-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -10310,7 +10310,7 @@ test_write_wifi_wpa_eap_ttls_mschapv2 (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "wifi-wpa-eap-ttls-mschapv2-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "wifi-wpa-eap-ttls-mschapv2-write", "didn't get ifcfg file path back after writing connection");
@@ -11376,7 +11376,7 @@ test_write_wired_qeth_dhcp (void)
 	/* Verify */
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wired-qeth-dhcp-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -11385,7 +11385,7 @@ test_write_wired_qeth_dhcp (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "wired-qeth-dhcp-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "wired-qeth-dhcp-write", "didn't get ifcfg file path back after writing connection");
@@ -11625,7 +11625,7 @@ test_write_permissions (void)
 	/* Verify */
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "permissions-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -11634,7 +11634,7 @@ test_write_permissions (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "permissions-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "permissions-write", "didn't get ifcfg file path back after writing connection");
@@ -11875,7 +11875,7 @@ test_write_wired_pppoe (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "wired-pppoe-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -11937,7 +11937,7 @@ test_write_vpn (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "vpn-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -12019,7 +12019,7 @@ test_write_mobile_broadband (gboolean gsm)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "mobile-broadband-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -12763,7 +12763,7 @@ test_write_ethernet_missing_ipv6 (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "ethernet-missing-ipv6", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -12772,7 +12772,7 @@ test_write_ethernet_missing_ipv6 (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "ethernet-missing-ipv6", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "ethernet-missing-ipv6", "didn't get ifcfg file path back after writing connection");
@@ -12954,7 +12954,7 @@ test_write_bond_main (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "bond-main-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -12963,7 +12963,7 @@ test_write_bond_main (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "bond-main-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "bond-main-write", "didn't get ifcfg file path back after writing connection");
@@ -13108,7 +13108,7 @@ test_write_bond_slave (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "bond-slave-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -13117,7 +13117,7 @@ test_write_bond_slave (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "bond-slave-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "bond-slave-write", "didn't get ifcfg file path back after writing connection");
@@ -13322,7 +13322,7 @@ test_write_infiniband (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "infiniband-write", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -13331,7 +13331,7 @@ test_write_infiniband (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "infiniband-write", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "infiniband-write", "didn't get ifcfg file path back after writing connection");
@@ -13479,7 +13479,7 @@ test_write_bond_slave_ib (void)
 
 	ASSERT (nm_connection_verify (connection, &error) == TRUE,
 	        "bond-slave-write-ib", "failed to verify connection: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	/* Save the ifcfg */
 	success = writer_new_connection (connection,
@@ -13488,7 +13488,7 @@ test_write_bond_slave_ib (void)
 	                                 &error);
 	ASSERT (success == TRUE,
 	        "bond-slave-write-ib", "failed to write connection to disk: %s",
-	        (error && error->message) ? error->message : "(unknown)");
+	        error->message);
 
 	ASSERT (testfile != NULL,
 	        "bond-slave-write-ib", "didn't get ifcfg file path back after writing connection");

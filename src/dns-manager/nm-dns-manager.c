@@ -793,8 +793,7 @@ plugin_failed (NMDnsPlugin *plugin, gpointer user_data)
 	/* Disable caching until the next DNS update */
 	if (!update_dns (self, TRUE, &error)) {
 		nm_log_warn (LOGD_DNS, "could not commit DNS changes: (%d) %s",
-		             error ? error->code : -1,
-		             error && error->message ? error->message : "(unknown)");
+		             error->code, error->message);
 		g_clear_error (&error);
 	}
 }
@@ -832,8 +831,7 @@ nm_dns_manager_add_ip4_config (NMDnsManager *mgr,
 
 	if (!priv->updates_queue && !update_dns (mgr, FALSE, &error)) {
 		nm_log_warn (LOGD_DNS, "could not commit DNS changes: (%d) %s",
-		             error ? error->code : -1,
-		             error && error->message ? error->message : "(unknown)");
+		             error->code, error->message);
 		g_clear_error (&error);
 	}
 
@@ -866,8 +864,7 @@ nm_dns_manager_remove_ip4_config (NMDnsManager *mgr, NMIP4Config *config)
 
 	if (!priv->updates_queue && !update_dns (mgr, FALSE, &error)) {
 		nm_log_warn (LOGD_DNS, "could not commit DNS changes: (%d) %s",
-		             error ? error->code : -1,
-		             error && error->message ? error->message : "(unknown)");
+		             error->code, error->message);
 		g_clear_error (&error);
 	}
 
@@ -909,8 +906,7 @@ nm_dns_manager_add_ip6_config (NMDnsManager *mgr,
 
 	if (!priv->updates_queue && !update_dns (mgr, FALSE, &error)) {
 		nm_log_warn (LOGD_DNS, "could not commit DNS changes: (%d) %s",
-		             error ? error->code : -1,
-		             error && error->message ? error->message : "(unknown)");
+		             error->code, error->message);
 		g_clear_error (&error);
 	}
 
@@ -943,8 +939,7 @@ nm_dns_manager_remove_ip6_config (NMDnsManager *mgr, NMIP6Config *config)
 
 	if (!priv->updates_queue && !update_dns (mgr, FALSE, &error)) {
 		nm_log_warn (LOGD_DNS, "could not commit DNS changes: (%d) %s",
-		             error ? error->code : -1,
-		             error && error->message ? error->message : "(unknown)");
+		             error->code, error->message);
 		g_clear_error (&error);
 	}
 
@@ -988,8 +983,7 @@ nm_dns_manager_set_hostname (NMDnsManager *mgr,
 
 	if (!priv->updates_queue && !update_dns (mgr, FALSE, &error)) {
 		nm_log_warn (LOGD_DNS, "could not commit DNS changes: (%d) %s",
-		             error ? error->code : -1,
-		             error && error->message ? error->message : "(unknown)");
+		             error->code, error->message);
 		g_clear_error (&error);
 	}
 }
@@ -1044,8 +1038,7 @@ nm_dns_manager_end_updates (NMDnsManager *mgr, const char *func)
 	nm_log_dbg (LOGD_DNS, "(%s): committing DNS changes (%d)", func, priv->updates_queue);
 	if (!update_dns (mgr, FALSE, &error)) {
 		nm_log_warn (LOGD_DNS, "could not commit DNS changes: (%d) %s",
-			         error ? error->code : -1,
-			         error && error->message ? error->message : "(unknown)");
+		             error->code, error->message);
 		g_clear_error (&error);
 	}
 
@@ -1146,8 +1139,7 @@ dispose (GObject *object)
 	 */
 	if (priv->dns_touched && !update_dns (self, TRUE, &error)) {
 		nm_log_warn (LOGD_DNS, "could not commit DNS changes on shutdown: (%d) %s",
-		             error ? error->code : -1,
-		             error && error->message ? error->message : "(unknown)");
+		             error->code, error->message);
 		g_clear_error (&error);
 		priv->dns_touched = FALSE;
 	}

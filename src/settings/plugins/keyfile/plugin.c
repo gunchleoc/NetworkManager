@@ -111,7 +111,7 @@ update_connection (SCPluginKeyfile *self,
 	if (!tmp) {
 		/* Error; remove the connection */
 		nm_log_warn (LOGD_SETTINGS, "    error in connection %s: %s", name,
-		             (error && error->message) ? error->message : "(unknown)");
+		             error->message);
 		g_clear_error (&error);
 		remove_connection (self, connection);
 		return;
@@ -166,7 +166,7 @@ new_connection (SCPluginKeyfile *self,
 	tmp = nm_keyfile_connection_new (NULL, name, &error);
 	if (!tmp) {
 		nm_log_warn (LOGD_SETTINGS, "    error in connection %s: %s", name,
-		             (error && error->message) ? error->message : "(unknown)");
+		             error->message);
 		g_clear_error (&error);
 		return;
 	}
@@ -320,8 +320,7 @@ read_connections (NMSystemConfigInterface *config)
 	if (!dir) {
 		nm_log_warn (LOGD_SETTINGS, "Cannot read directory '%s': (%d) %s",
 		             KEYFILE_DIR,
-		             error ? error->code : -1,
-		             error && error->message ? error->message : "(unknown)");
+		             error->code, error->message);
 		g_clear_error (&error);
 		return;
 	}

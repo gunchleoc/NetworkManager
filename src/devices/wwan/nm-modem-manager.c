@@ -131,13 +131,12 @@ create_modem (NMModemManager *self, const char *path)
 			handle_new_modem (self, modem);
 		else {
 			nm_log_warn (LOGD_MB, "failed to create modem: %s",
-				         error ? error->message : "(unknown)");
+				         error->message);
 		}
 		g_hash_table_destroy (properties);
 	} else {
 		nm_log_warn (LOGD_MB, "could not get modem properties: %s %s",
-		             error ? dbus_g_error_get_name (error) : "(none)",
-		             error ? error->message : "(unknown)");
+		             dbus_g_error_get_name (error), error->message);
 	}
 
 	g_object_unref (proxy);
@@ -403,7 +402,7 @@ modem_object_added (MMManager *modem_manager,
 		handle_new_modem (self, modem);
 	else {
 		nm_log_warn (LOGD_MB, "failed to create modem: %s",
-		             error ? error->message : "(unknown)");
+		             error->message);
 	}
 	g_clear_error (&error);
 }

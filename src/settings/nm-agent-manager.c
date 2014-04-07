@@ -301,7 +301,7 @@ impl_agent_manager_register_with_capabilities (NMAgentManager *self,
 	                                            &local)) {
 		error = g_error_new_literal (NM_AGENT_MANAGER_ERROR,
 		                             NM_AGENT_MANAGER_ERROR_SESSION_NOT_FOUND,
-		                             local && local->message ? local->message : "Session not found");
+		                             local->message);
 		goto done;
 	}
 
@@ -813,8 +813,7 @@ get_done_cb (NMSecretAgent *agent,
 		nm_log_dbg (LOGD_AGENTS, "(%s) agent failed secrets request %p/%s/%s: (%d) %s",
 		            nm_secret_agent_get_description (agent),
 		            req, parent->detail, req->setting_name,
-		            error ? error->code : -1,
-		            (error && error->message) ? error->message : "(unknown)");
+		            error->code, error->message);
 
 		if (dbus_g_error_has_name (error, NM_DBUS_INTERFACE_SECRET_AGENT ".UserCanceled")) {
 			error = g_error_new_literal (NM_AGENT_MANAGER_ERROR,
@@ -950,7 +949,7 @@ get_agent_modify_auth_cb (NMAuthChain *chain,
 		nm_log_dbg (LOGD_AGENTS, "(%s) agent %p/%s/%s MODIFY check error: (%d) %s",
 		            nm_secret_agent_get_description (parent->current),
 		            req, parent->detail, req->setting_name,
-		            error->code, error->message ? error->message : "(unknown)");
+		            error->code, error->message);
 		/* Try the next agent */
 		request_next_agent (parent);
 	} else {
@@ -1250,8 +1249,7 @@ save_done_cb (NMSecretAgent *agent,
 		nm_log_dbg (LOGD_AGENTS, "(%s) agent failed save secrets request %p/%s: (%d) %s",
 		            nm_secret_agent_get_description (agent),
 		            req, parent->detail,
-		            error ? error->code : -1,
-		            (error && error->message) ? error->message : "(unknown)");
+		            error->code, error->message);
 		/* Try the next agent */
 		request_next_agent (parent);
 		return;
@@ -1341,8 +1339,7 @@ delete_done_cb (NMSecretAgent *agent,
 	if (error) {
 		nm_log_dbg (LOGD_AGENTS, "(%s) agent failed delete secrets request %p/%s: (%d) %s",
 		            nm_secret_agent_get_description (agent), req, req->detail,
-		            error ? error->code : -1,
-		            (error && error->message) ? error->message : "(unknown)");
+		            error->code, error->message);
 	} else {
 		nm_log_dbg (LOGD_AGENTS, "(%s) agent deleted secrets for request %p/%s",
 		            nm_secret_agent_get_description (agent), req, req->detail);
