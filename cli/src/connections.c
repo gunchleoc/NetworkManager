@@ -5001,8 +5001,8 @@ add_connection_cb (NMRemoteSettings *settings,
 
 	if (error) {
 		g_string_printf (nmc->return_text,
-		                 _("Error: Failed to add '%s' connection: (%d) %s"),
-		                 info->con_name, error->code, error->message);
+		                 _("Error: Failed to add '%s' connection: %s"),
+		                 info->con_name, error->message);
 		nmc->return_value = NMC_RESULT_ERROR_CON_ACTIVATION;
 	} else {
 		printf (_("Connection '%s' (%s) successfully added.\n"),
@@ -7489,10 +7489,10 @@ editor_menu_main (NmCli *nmc, NMConnection *connection, const char *connection_t
 					g_cond_wait (&nmc_editor_cond, &nmc_editor_mutex);
 
 				if (nmc_editor_error) {
-					printf (_("Error: Failed to save '%s' (%s) connection: (%d) %s\n"),
+					printf (_("Error: Failed to save '%s' (%s) connection: %s\n"),
 					        nm_connection_get_id (connection),
 					        nm_connection_get_uuid (connection),
-					        nmc_editor_error->code, nmc_editor_error->message);
+					        nmc_editor_error->message);
 
 					g_error_free (nmc_editor_error);
 				} else {
@@ -7579,10 +7579,10 @@ editor_menu_main (NmCli *nmc, NMConnection *connection, const char *connection_t
 				g_cond_wait (&nmc_editor_cond, &nmc_editor_mutex);
 
 			if (nmc_editor_error) {
-				printf (_("Error: Failed to activate '%s' (%s) connection: (%d) %s\n"),
+				printf (_("Error: Failed to activate '%s' (%s) connection: %s\n"),
 				        nm_connection_get_id (connection),
 				        nm_connection_get_uuid (connection),
-				        nmc_editor_error->code, nmc_editor_error->message);
+				        nmc_editor_error->message);
 				g_error_free (nmc_editor_error);
 			} else {
 				printf (_("Monitoring connection activation (press any key to continue)\n"));
@@ -8029,9 +8029,9 @@ modify_connection_cb (NMRemoteConnection *connection,
 
         if (error) {
 		g_string_printf (nmc->return_text,
-		                 _("Error: Failed to modify connection '%s': (%d) %s"),
+		                 _("Error: Failed to modify connection '%s': %s"),
 		                 nm_connection_get_id (NM_CONNECTION (connection)),
-		                 error->code, error->message);
+		                 error->message);
 		nmc->return_value = NMC_RESULT_ERROR_UNKNOWN;
 	} else {
 		if (nmc->print_output == NMC_PRINT_PRETTY)

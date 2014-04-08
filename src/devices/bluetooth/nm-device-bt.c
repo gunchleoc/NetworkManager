@@ -502,9 +502,9 @@ modem_ip4_config_result (NMModem *self,
 
 	if (error) {
 		nm_log_warn (LOGD_MB | LOGD_IP4 | LOGD_BT,
-		             "(%s): retrieving IP4 configuration failed: (%d) %s",
+		             "(%s): retrieving IP4 configuration failed: %s",
 		             nm_device_get_ip_iface (device),
-		             error->code, error->message);
+		             error->message);
 
 		nm_device_state_changed (device, NM_DEVICE_STATE_FAILED, NM_DEVICE_STATE_REASON_IP_CONFIG_UNAVAILABLE);
 	} else

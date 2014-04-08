@@ -562,8 +562,8 @@ save_hostname_cb (NMRemoteSettings *settings, GError *error, gpointer user_data)
 	NmCli *nmc = (NmCli *) user_data;
 
 	if (error) {
-		g_string_printf (nmc->return_text, _("Error: failed to set hostname: (%d) %s"),
-		                 error->code, error->message);
+		g_string_printf (nmc->return_text, _("Error: failed to set hostname: %s"),
+		                 error->message);
 		nmc->return_value = NMC_RESULT_ERROR_UNKNOWN;
 	}
 	quit ();

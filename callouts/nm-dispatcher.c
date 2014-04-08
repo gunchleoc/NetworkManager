@@ -404,8 +404,8 @@ dispatch_one_script (Request *request)
 		request->script_watch_id = g_child_watch_add (script->pid, (GChildWatchFunc) script_watch_cb, script);
 		request->script_timeout_id = g_timeout_add_seconds (SCRIPT_TIMEOUT, script_timeout_cb, script);
 	} else {
-		g_warning ("Failed to execute script '%s': (%d) %s",
-		           script->script, error->code, error->message);
+		g_warning ("Failed to execute script '%s': %s",
+		           script->script, error->message);
 		script->result = DISPATCH_RESULT_EXEC_FAILED;
 		script->error = g_strdup (error->message);
 		g_clear_error (&error);
@@ -434,8 +434,8 @@ find_scripts (const char *str_action)
 		dirname = NMD_SCRIPT_DIR_DEFAULT;
 
 	if (!(dir = g_dir_open (dirname, 0, &error))) {
-		g_message ("Failed to open dispatcher directory '%s': (%d) %s",
-		           dirname, error->code, error->message);
+		g_message ("Failed to open dispatcher directory '%s': %s",
+		           dirname, error->message);
 		g_error_free (error);
 		return NULL;
 	}

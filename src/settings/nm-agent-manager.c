@@ -220,8 +220,8 @@ agent_register_permissions_done (NMAuthChain *chain,
 	if (error) {
 		local = g_error_new (NM_AGENT_MANAGER_ERROR,
 		                     NM_AGENT_MANAGER_ERROR_PERMISSION_DENIED,
-		                     "Failed to request agent permissions: (%d) %s",
-		                     error->code, error->message);
+		                     "Failed to request agent permissions: %s",
+		                     error->message);
 		dbus_g_method_return_error (context, local);
 		g_error_free (local);
 	} else {
@@ -810,10 +810,10 @@ get_done_cb (NMSecretAgent *agent,
 	g_return_if_fail (call_id == parent->current_call_id);
 
 	if (error) {
-		nm_log_dbg (LOGD_AGENTS, "(%s) agent failed secrets request %p/%s/%s: (%d) %s",
+		nm_log_dbg (LOGD_AGENTS, "(%s) agent failed secrets request %p/%s/%s: %s",
 		            nm_secret_agent_get_description (agent),
 		            req, parent->detail, req->setting_name,
-		            error->code, error->message);
+		            error->message);
 
 		if (dbus_g_error_has_name (error, NM_DBUS_INTERFACE_SECRET_AGENT ".UserCanceled")) {
 			error = g_error_new_literal (NM_AGENT_MANAGER_ERROR,
@@ -946,10 +946,10 @@ get_agent_modify_auth_cb (NMAuthChain *chain,
 	req->chain = NULL;
 
 	if (error) {
-		nm_log_dbg (LOGD_AGENTS, "(%s) agent %p/%s/%s MODIFY check error: (%d) %s",
+		nm_log_dbg (LOGD_AGENTS, "(%s) agent %p/%s/%s MODIFY check error: %s",
 		            nm_secret_agent_get_description (parent->current),
 		            req, parent->detail, req->setting_name,
-		            error->code, error->message);
+		            error->message);
 		/* Try the next agent */
 		request_next_agent (parent);
 	} else {
@@ -1246,10 +1246,10 @@ save_done_cb (NMSecretAgent *agent,
 	g_return_if_fail (call_id == parent->current_call_id);
 
 	if (error) {
-		nm_log_dbg (LOGD_AGENTS, "(%s) agent failed save secrets request %p/%s: (%d) %s",
+		nm_log_dbg (LOGD_AGENTS, "(%s) agent failed save secrets request %p/%s: %s",
 		            nm_secret_agent_get_description (agent),
 		            req, parent->detail,
-		            error->code, error->message);
+		            error->message);
 		/* Try the next agent */
 		request_next_agent (parent);
 		return;
@@ -1337,9 +1337,9 @@ delete_done_cb (NMSecretAgent *agent,
 	g_return_if_fail (call_id == req->current_call_id);
 
 	if (error) {
-		nm_log_dbg (LOGD_AGENTS, "(%s) agent failed delete secrets request %p/%s: (%d) %s",
+		nm_log_dbg (LOGD_AGENTS, "(%s) agent failed delete secrets request %p/%s: %s",
 		            nm_secret_agent_get_description (agent), req, req->detail,
-		            error->code, error->message);
+		            error->message);
 	} else {
 		nm_log_dbg (LOGD_AGENTS, "(%s) agent deleted secrets for request %p/%s",
 		            nm_secret_agent_get_description (agent), req, req->detail);

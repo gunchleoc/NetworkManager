@@ -318,9 +318,9 @@ read_connections (NMSystemConfigInterface *config)
 
 	dir = g_dir_open (KEYFILE_DIR, 0, &error);
 	if (!dir) {
-		nm_log_warn (LOGD_SETTINGS, "Cannot read directory '%s': (%d) %s",
+		nm_log_warn (LOGD_SETTINGS, "Cannot read directory '%s': %s",
 		             KEYFILE_DIR,
-		             error->code, error->message);
+		             error->message);
 		g_clear_error (&error);
 		return;
 	}

@@ -1860,8 +1860,8 @@ add_and_activate_cb (NMClient *client,
 	NMActiveConnectionState state;
 
         if (error) {
-		g_string_printf (nmc->return_text, _("Error: Failed to add/activate new connection: (%d) %s"),
-		                 error->code, error->message);
+		g_string_printf (nmc->return_text, _("Error: Failed to add/activate new connection: %s"),
+		                 error->message);
 		nmc->return_value = NMC_RESULT_ERROR_CON_ACTIVATION;
 		quit ();
 	} else {

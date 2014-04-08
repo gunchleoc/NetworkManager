@@ -1774,8 +1774,8 @@ get_secrets_cb (NMSettingsConnection *connection,
 	priv->secrets_id = 0;
 
 	if (error) {
-		nm_log_err (LOGD_VPN, "Failed to request VPN secrets #%d: (%d) %s",
-		            priv->secrets_idx + 1, error->code, error->message);
+		nm_log_err (LOGD_VPN, "Failed to request VPN secrets #%d: %s",
+		            priv->secrets_idx + 1, error->message);
 		_set_vpn_state (self, STATE_FAILED, NM_VPN_CONNECTION_STATE_REASON_NO_SECRETS, FALSE);
 	} else {
 		/* Cache the username for later */
@@ -1857,8 +1857,8 @@ get_secrets (NMVPNConnection *self,
 	                                                       &error);
 	if (!priv->secrets_id) {
 		if (error) {
-			nm_log_err (LOGD_VPN, "failed to request VPN secrets #%d: (%d) %s",
-			            priv->secrets_idx + 1, error->code, error->message);
+			nm_log_err (LOGD_VPN, "failed to request VPN secrets #%d: %s",
+			            priv->secrets_idx + 1, error->message);
 		}
 		_set_vpn_state (self, STATE_FAILED, NM_VPN_CONNECTION_STATE_REASON_NO_SECRETS, FALSE);
 		g_clear_error (&error);

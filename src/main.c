@@ -498,8 +498,8 @@ main (int argc, char *argv[])
 	/* Read the config file and CLI overrides */
 	config = nm_config_new (&error);
 	if (config == NULL) {
-		fprintf (stderr, _("Failed to read configuration: (%d) %s\n"),
-		         error->code, error->message);
+		fprintf (stderr, _("Failed to read configuration: %s\n"),
+		         error->message);
 		exit (1);
 	}
 
@@ -524,9 +524,9 @@ main (int argc, char *argv[])
 
 	/* Parse the state file */
 	if (!parse_state_file (state_file, &net_enabled, &wifi_enabled, &wwan_enabled, &wimax_enabled, &error)) {
-		fprintf (stderr, _("State file %s parsing failed: (%d) %s\n"),
+		fprintf (stderr, _("State file %s parsing failed: %s\n"),
 		         state_file,
-		         error->code, error->message);
+		         error->message);
 		/* Not a hard failure */
 	}
 	g_clear_error (&error);

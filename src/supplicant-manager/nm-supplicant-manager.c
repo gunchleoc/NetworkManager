@@ -146,8 +146,8 @@ get_capabilities_cb  (DBusGProxy *proxy, DBusGProxyCall *call_id, gpointer user_
 	if (!dbus_g_proxy_end_call (proxy, call_id, &error,
 	                            DBUS_TYPE_G_MAP_OF_VARIANT, &props,
 	                            G_TYPE_INVALID)) {
-		nm_log_warn (LOGD_CORE, "Unexpected error requesting supplicant properties: (%d) %s",
-		             error->code, error->message);
+		nm_log_warn (LOGD_CORE, "Unexpected error requesting supplicant properties: %s",
+		             error->message);
 		g_clear_error (&error);
 		return;
 	}

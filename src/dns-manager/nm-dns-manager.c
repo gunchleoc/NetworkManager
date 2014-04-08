@@ -792,8 +792,8 @@ plugin_failed (NMDnsPlugin *plugin, gpointer user_data)
 
 	/* Disable caching until the next DNS update */
 	if (!update_dns (self, TRUE, &error)) {
-		nm_log_warn (LOGD_DNS, "could not commit DNS changes: (%d) %s",
-		             error->code, error->message);
+		nm_log_warn (LOGD_DNS, "could not commit DNS changes: %s",
+		             error->message);
 		g_clear_error (&error);
 	}
 }
@@ -830,8 +830,8 @@ nm_dns_manager_add_ip4_config (NMDnsManager *mgr,
 		priv->configs = g_slist_append (priv->configs, g_object_ref (config));
 
 	if (!priv->updates_queue && !update_dns (mgr, FALSE, &error)) {
-		nm_log_warn (LOGD_DNS, "could not commit DNS changes: (%d) %s",
-		             error->code, error->message);
+		nm_log_warn (LOGD_DNS, "could not commit DNS changes: %s",
+		             error->message);
 		g_clear_error (&error);
 	}
 
@@ -863,8 +863,8 @@ nm_dns_manager_remove_ip4_config (NMDnsManager *mgr, NMIP4Config *config)
 	g_object_unref (config);
 
 	if (!priv->updates_queue && !update_dns (mgr, FALSE, &error)) {
-		nm_log_warn (LOGD_DNS, "could not commit DNS changes: (%d) %s",
-		             error->code, error->message);
+		nm_log_warn (LOGD_DNS, "could not commit DNS changes: %s",
+		             error->message);
 		g_clear_error (&error);
 	}
 
@@ -905,8 +905,8 @@ nm_dns_manager_add_ip6_config (NMDnsManager *mgr,
 		priv->configs = g_slist_append (priv->configs, g_object_ref (config));
 
 	if (!priv->updates_queue && !update_dns (mgr, FALSE, &error)) {
-		nm_log_warn (LOGD_DNS, "could not commit DNS changes: (%d) %s",
-		             error->code, error->message);
+		nm_log_warn (LOGD_DNS, "could not commit DNS changes: %s",
+		             error->message);
 		g_clear_error (&error);
 	}
 
@@ -938,8 +938,8 @@ nm_dns_manager_remove_ip6_config (NMDnsManager *mgr, NMIP6Config *config)
 	g_object_unref (config);	
 
 	if (!priv->updates_queue && !update_dns (mgr, FALSE, &error)) {
-		nm_log_warn (LOGD_DNS, "could not commit DNS changes: (%d) %s",
-		             error->code, error->message);
+		nm_log_warn (LOGD_DNS, "could not commit DNS changes: %s",
+		             error->message);
 		g_clear_error (&error);
 	}
 
@@ -982,8 +982,8 @@ nm_dns_manager_set_hostname (NMDnsManager *mgr,
 	priv->hostname = g_strdup (filtered);
 
 	if (!priv->updates_queue && !update_dns (mgr, FALSE, &error)) {
-		nm_log_warn (LOGD_DNS, "could not commit DNS changes: (%d) %s",
-		             error->code, error->message);
+		nm_log_warn (LOGD_DNS, "could not commit DNS changes: %s",
+		             error->message);
 		g_clear_error (&error);
 	}
 }
@@ -1037,8 +1037,8 @@ nm_dns_manager_end_updates (NMDnsManager *mgr, const char *func)
 	/* Commit all the outstanding changes */
 	nm_log_dbg (LOGD_DNS, "(%s): committing DNS changes (%d)", func, priv->updates_queue);
 	if (!update_dns (mgr, FALSE, &error)) {
-		nm_log_warn (LOGD_DNS, "could not commit DNS changes: (%d) %s",
-		             error->code, error->message);
+		nm_log_warn (LOGD_DNS, "could not commit DNS changes: %s",
+		             error->message);
 		g_clear_error (&error);
 	}
 
@@ -1138,8 +1138,8 @@ dispose (GObject *object)
 	 * DNS updates yet, there's no reason to touch resolv.conf on shutdown.
 	 */
 	if (priv->dns_touched && !update_dns (self, TRUE, &error)) {
-		nm_log_warn (LOGD_DNS, "could not commit DNS changes on shutdown: (%d) %s",
-		             error->code, error->message);
+		nm_log_warn (LOGD_DNS, "could not commit DNS changes on shutdown: %s",
+		             error->message);
 		g_clear_error (&error);
 		priv->dns_touched = FALSE;
 	}

@@ -2013,9 +2013,9 @@ platform_link_added (NMManager *self,
 		}
 
 		if (error) {
-			nm_log_warn (LOGD_HW, "%s: factory failed to create device: (%d) %s",
+			nm_log_warn (LOGD_HW, "%s: factory failed to create device: %s",
 			             plink->udi,
-			             error->code, error->message);
+			             error->message);
 			g_clear_error (&error);
 			return;
 		}
@@ -3731,9 +3731,8 @@ _internal_enable (NMManager *self, gboolean enable)
 		                                G_TYPE_BOOLEAN, (gpointer) &enable,
 		                                &err)) {
 			/* Not a hard error */
-			nm_log_warn (LOGD_SUSPEND, "writing to state file %s failed: (%d) %s.",
+			nm_log_warn (LOGD_SUSPEND, "writing to state file %s failed: %s.",
 			             priv->state_file,
-			             err->code,
 			             err->message);
 		}
 	}
@@ -4495,9 +4494,9 @@ manager_radio_user_toggled (NMManager *self,
 		                                "main", rstate->key,
 		                                G_TYPE_BOOLEAN, (gpointer) &enabled,
 		                                &error)) {
-			nm_log_warn (LOGD_CORE, "writing to state file %s failed: (%d) %s.",
+			nm_log_warn (LOGD_CORE, "writing to state file %s failed: %s.",
 			             priv->state_file,
-			             error->code, error->message);
+			             error->message);
 			g_clear_error (&error);
 		}
 	}

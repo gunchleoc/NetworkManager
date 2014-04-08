@@ -106,11 +106,11 @@ add_or_change_cb (DBusGProxy *proxy, DBusGProxyCall *call_id, gpointer user_data
 	                            G_TYPE_INVALID)) {
 		g_assert (error);
 		if (g_strcmp0 (error->message, "ZONE_ALREADY_SET") != 0) {
-			nm_log_warn (LOGD_FIREWALL, "(%s) firewall zone add/change failed [%u]: (%d) %s",
-			             info->iface, info->id, error->code, error->message);
+			nm_log_warn (LOGD_FIREWALL, "(%s) firewall zone add/change failed [%u]: %s",
+			             info->iface, info->id, error->message);
 		} else {
-			nm_log_dbg (LOGD_FIREWALL, "(%s) firewall zone add/change failed [%u]: (%d) %s",
-			            info->iface, info->id, error->code, error->message);
+			nm_log_dbg (LOGD_FIREWALL, "(%s) firewall zone add/change failed [%u]: %s",
+			            info->iface, info->id, error->message);
 		}
 	} else {
 		nm_log_dbg (LOGD_FIREWALL, "(%s) firewall zone add/change succeeded [%u]",
@@ -169,11 +169,11 @@ remove_cb (DBusGProxy *proxy, DBusGProxyCall *call_id, gpointer user_data)
 		g_assert (error);
 		/* ignore UNKNOWN_INTERFACE errors */
 		if (error->message && !strstr (error->message, "UNKNOWN_INTERFACE")) {
-			nm_log_warn (LOGD_FIREWALL, "(%s) firewall zone remove failed [%u]: (%d) %s",
-			             info->iface, info->id, error->code, error->message);
+			nm_log_warn (LOGD_FIREWALL, "(%s) firewall zone remove failed [%u]: %s",
+			             info->iface, info->id, error->message);
 		} else {
-			nm_log_dbg (LOGD_FIREWALL, "(%s) firewall zone remove failed [%u]: (%d) %s",
-			            info->iface, info->id, error->code, error->message);
+			nm_log_dbg (LOGD_FIREWALL, "(%s) firewall zone remove failed [%u]: %s",
+			            info->iface, info->id, error->message);
 		}
 	} else {
 		nm_log_dbg (LOGD_FIREWALL, "(%s) firewall zone remove succeeded [%u]",

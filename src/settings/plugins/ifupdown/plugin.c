@@ -588,8 +588,8 @@ update_system_hostname(NMInotifyHelper *inotify_helper,
 						 &hostname_file_len,
 						 &error)) {
 		nm_log_warn (LOGD_SETTINGS, "update_system_hostname() - couldn't read "
-		             IFUPDOWN_SYSTEM_HOSTNAME_FILE " (%d/%s)",
-		             error->code, error->message);
+		             IFUPDOWN_SYSTEM_HOSTNAME_FILE " (%s)",
+		             error->message);
 		return;
 	}
 
@@ -620,8 +620,8 @@ write_system_hostname(NMSystemConfigInterface *config,
 						 -1,
 						 &error)) {
 		nm_log_warn (LOGD_SETTINGS, "update_system_hostname() - couldn't write hostname (%s) to "
-		             IFUPDOWN_SYSTEM_HOSTNAME_FILE " (%d/%s)",
-		             newhostname, error->code, error->message);	
+		             IFUPDOWN_SYSTEM_HOSTNAME_FILE " (%s)",
+		             newhostname, error->message);	
 	} else {
 		priv->hostname = g_strdup (newhostname);
 	}

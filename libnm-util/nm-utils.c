@@ -1489,8 +1489,8 @@ nm_utils_uuid_generate_from_string (const char *s)
 	char *buf = NULL;
 
 	if (!nm_utils_init (&error)) {
-		g_warning ("error initializing crypto: (%d) %s",
-		           error->code, error->message);
+		g_warning ("error initializing crypto: %s",
+		           error->message);
 		if (error)
 			g_error_free (error);
 		return NULL;
@@ -1498,8 +1498,8 @@ nm_utils_uuid_generate_from_string (const char *s)
 
 	uuid = g_malloc0 (sizeof (*uuid));
 	if (!crypto_md5_hash (NULL, 0, s, strlen (s), (char *) uuid, sizeof (*uuid), &error)) {
-		g_warning ("error generating UUID: (%d) %s",
-		           error->code, error->message);
+		g_warning ("error generating UUID: %s",
+		           error->message);
 		if (error)
 			g_error_free (error);
 		goto out;

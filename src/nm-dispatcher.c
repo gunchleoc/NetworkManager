@@ -328,8 +328,7 @@ dispatcher_done_cb (DBusGProxy *proxy, DBusGProxyCall *call, gpointer user_data)
 		free_results (results);
 	} else {
 		g_assert (error);
-		nm_log_warn (LOGD_DISPATCH, "(%u) failed: (%d) %s",
-		             info->request_id, error->code, error->message);
+		nm_log_warn (LOGD_DISPATCH, "(%u) failed: %s", info->request_id, error->message);
 	}
 
 	if (info->callback)

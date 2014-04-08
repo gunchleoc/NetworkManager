@@ -1021,9 +1021,9 @@ auto_activate_device (gpointer user_data)
 		                                     data->device,
 		                                     subject,
 		                                     &error)) {
-			nm_log_info (LOGD_DEVICE, "Connection '%s' auto-activation failed: (%d) %s",
+			nm_log_info (LOGD_DEVICE, "Connection '%s' auto-activation failed: %s",
 			             nm_connection_get_id (best_connection),
-			             error->code, error->message);
+			             error->message);
 			g_error_free (error);
 		}
 		g_object_unref (subject);
@@ -1398,9 +1398,9 @@ activate_secondary_connections (NMPolicy *policy,
 		if (ac)
 			secondary_ac_list = g_slist_append (secondary_ac_list, g_object_ref (ac));
 		else {
-			nm_log_warn (LOGD_DEVICE, "Secondary connection '%s (%s)' auto-activation failed: (%d) %s",
+			nm_log_warn (LOGD_DEVICE, "Secondary connection '%s (%s)' auto-activation failed: %s",
 			             nm_connection_get_id (NM_CONNECTION (settings_con)), sec_uuid,
-			             error->code, error->message);
+			             error->message);
 			g_clear_error (&error);
 			success = FALSE;
 			break;
@@ -1985,9 +1985,9 @@ _deactivate_if_active (NMManager *manager, NMConnection *connection)
 			                                       nm_active_connection_get_path (ac),
 			                                       NM_DEVICE_STATE_REASON_CONNECTION_REMOVED,
 			                                       &error)) {
-				nm_log_warn (LOGD_DEVICE, "Connection '%s' disappeared, but error deactivating it: (%d) %s",
+				nm_log_warn (LOGD_DEVICE, "Connection '%s' disappeared, but error deactivating it: %s",
 					         nm_connection_get_id (connection),
-				             error->code, error->message);
+				             error->message);
 				g_clear_error (&error);
 			}
 		}

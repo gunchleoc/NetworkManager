@@ -157,9 +157,9 @@ read_connections (NMSystemConfigInterface *config)
 
 	dir = g_dir_open (EXAMPLE_DIR, 0, &error);
 	if (!dir) {
-		nm_log_warn (LOGD_SETTINGS, "Cannot read directory '%s': (%d) %s",
+		nm_log_warn (LOGD_SETTINGS, "Cannot read directory '%s': %s",
 		             EXAMPLE_DIR,
-		             error->code, error->message);
+		             error->message);
 		g_clear_error (&error);
 		return;
 	}
@@ -196,11 +196,10 @@ update_connection_settings_commit_cb (NMSettingsConnection *orig, GError *error,
 	 * an error here.
 	 */
 	if (error) {
-		nm_log_warn (LOGD_SETTINGS, "%s: '%s' / '%s' invalid: %d",
+		nm_log_warn (LOGD_SETTINGS, "%s: '%s' / '%s' invalid",
 		             __func__,
 		             g_type_name (nm_connection_lookup_setting_type_by_quark (error->domain)),
-		             error->message,
-		             error->code);
+		             error->message);
 		g_clear_error (&error);
 
 		nm_settings_connection_signal_remove (orig);

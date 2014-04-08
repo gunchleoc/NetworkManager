@@ -151,9 +151,9 @@ try_add_service (NMVPNManager *self, const char *namefile)
 		g_hash_table_insert (priv->services, (char *) service_name, service);
 		nm_log_info (LOGD_VPN, "VPN: loaded %s", service_name);
 	} else {
-		nm_log_warn (LOGD_VPN, "failed to load VPN service file %s: (%d) %s",
+		nm_log_warn (LOGD_VPN, "failed to load VPN service file %s: %s",
 		             namefile,
-		             error->code, error->message);
+		             error->message);
 		g_clear_error (&error);
 	}
 }

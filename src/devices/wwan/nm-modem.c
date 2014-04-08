@@ -357,8 +357,7 @@ ppp_stage3_ip4_config_start (NMModem *self,
 
 		ret = NM_ACT_STAGE_RETURN_POSTPONE;
 	} else {
-		nm_log_err (LOGD_PPP, "error starting PPP: (%d) %s",
-		            error->code, error->message);
+		nm_log_err (LOGD_PPP, "error starting PPP: %s", error->message);
 		g_error_free (error);
 
 		g_object_unref (priv->ppp_manager);

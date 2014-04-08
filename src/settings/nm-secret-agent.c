@@ -321,9 +321,9 @@ cancel_done (DBusGProxy *proxy, DBusGProxyCall *call_id, void *user_data)
 	GError *error = NULL;
 
 	if (!dbus_g_proxy_end_call (proxy, call_id, &error, G_TYPE_INVALID)) {
-		nm_log_dbg (LOGD_AGENTS, "(%s): agent failed to cancel secrets: (%d) %s",
+		nm_log_dbg (LOGD_AGENTS, "(%s): agent failed to cancel secrets: %s",
 		            (const char *) user_data,
-		            error->code, error->message);
+		            error->message);
 		g_clear_error (&error);
 	}
 }

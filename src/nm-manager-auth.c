@@ -386,8 +386,8 @@ pk_call_cb (GObject *object, GAsyncResult *result, gpointer user_data)
 		if (!call->chain->error)
 			call->chain->error = g_error_copy (error);
 
-		nm_log_warn (LOGD_CORE, "error requesting auth for %s: (%d) %s",
-		             call->permission, error->code, error->message);
+		nm_log_warn (LOGD_CORE, "error requesting auth for %s: %s",
+		             call->permission, error->message);
 		g_clear_error (&error);
 	} else {
 		guint call_result = NM_AUTH_CALL_RESULT_UNKNOWN;

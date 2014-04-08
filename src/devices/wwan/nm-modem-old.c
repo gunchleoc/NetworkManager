@@ -201,8 +201,8 @@ set_mm_enabled_done (DBusGProxy *proxy, DBusGProxyCall *call_id, gpointer user_d
 	GError *error = NULL;
 
 	if (!dbus_g_proxy_end_call (proxy, call_id, &error, G_TYPE_INVALID)) {
-		nm_log_warn (LOGD_MB, "failed to enable/disable modem: (%d) %s",
-		             error->code, error->message);
+		nm_log_warn (LOGD_MB, "failed to enable/disable modem: %s",
+		             error->message);
 		nm_modem_set_prev_state (NM_MODEM (user_data), "enable/disable failed");
 	}
 	/* Wait for the state change signal to indicate enabled state changed */
@@ -266,8 +266,7 @@ stage1_prepare_done (DBusGProxy *proxy, DBusGProxyCall *call, gpointer user_data
 		}
 
 		if (!asked) {
-			nm_log_warn (LOGD_MB, "Mobile connection failed: (%d) %s",
-			             error->code, error->message);
+			nm_log_warn (LOGD_MB, "Mobile connection failed: %s", error->message);
 			g_signal_emit_by_name (self, NM_MODEM_PREPARE_RESULT, FALSE, translate_mm_error (error));
 		}
 		g_error_free (error);
@@ -323,8 +322,7 @@ stage1_pin_done (DBusGProxy *proxy, DBusGProxyCall *call_id, gpointer user_data)
 		if (priv->enable_delay_id == 0)
 			priv->enable_delay_id = g_timeout_add_seconds (4, (GSourceFunc) do_enable, self);
 	} else {
-		nm_log_warn (LOGD_MB, "GSM PIN unlock failed: (%d) %s",
-		             error->code, error->message);
+		nm_log_warn (LOGD_MB, "GSM PIN unlock failed: %s", error->message);
 
 		/* try to translate the error reason */
 		reason = translate_mm_error (error);
@@ -377,8 +375,7 @@ stage1_enable_done (DBusGProxy *proxy, DBusGProxyCall *call_id, gpointer user_da
 		if ((priv->caps & CAPS_3GPP) && dbus_g_error_has_name (error, MM_OLD_MODEM_ERROR_SIM_PIN))
 			handle_enable_pin_required (self);
 		else {
-			nm_log_warn (LOGD_MB, "Modem enable failed: (%d) %s",
-			             error->code, error->message);
+			nm_log_warn (LOGD_MB, "Modem enable failed: %s", error->message);
 
 			/* try to translate the error reason */
 			reason = translate_mm_error (error);
@@ -630,10 +627,8 @@ disconnect_done (DBusGProxy *proxy,
 	GError *error = NULL;
 	gboolean warn = GPOINTER_TO_UINT (user_data);
 
-	if (!dbus_g_proxy_end_call (proxy, call_id, &error, G_TYPE_INVALID) && warn) {
-		nm_log_info (LOGD_MB, "disconnect failed: (%d) %s",
-		             error->code, error->message);
-	}
+	if (!dbus_g_proxy_end_call (proxy, call_id, &error, G_TYPE_INVALID) && warn)
+		nm_log_info (LOGD_MB, "disconnect failed: %s", error->message);
 }
 
 static void

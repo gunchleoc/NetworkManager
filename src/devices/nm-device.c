@@ -4342,8 +4342,8 @@ share_init (void)
 
 		if (!g_spawn_sync ("/", argv, envp, G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL,
 		                   share_child_setup, NULL, NULL, NULL, &status, &error)) {
-			nm_log_err (LOGD_SHARING, "error loading NAT module %s: (%d) %s",
-			            *iter, error->code, error->message);
+			nm_log_err (LOGD_SHARING, "error loading NAT module %s: %s",
+			            *iter, error->message);
 			if (error)
 				g_error_free (error);
 		}

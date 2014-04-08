@@ -702,8 +702,8 @@ new_secrets_commit_cb (NMSettingsConnection *connection,
                        gpointer user_data)
 {
 	if (error) {
-		nm_log_warn (LOGD_SETTINGS, "Error saving new secrets to backing storage: (%d) %s",
-		             error->code, error->message);
+		nm_log_warn (LOGD_SETTINGS, "Error saving new secrets to backing storage: %s",
+		             error->message);
 	}
 }
 
@@ -730,11 +730,10 @@ agent_secrets_done_cb (NMAgentManager *manager,
 	gboolean agent_had_system = FALSE;
 
 	if (error) {
-		nm_log_dbg (LOGD_SETTINGS, "(%s/%s:%u) secrets request error: (%d) %s",
+		nm_log_dbg (LOGD_SETTINGS, "(%s/%s:%u) secrets request error: %s",
 		            nm_connection_get_uuid (NM_CONNECTION (self)),
 		            setting_name,
 		            call_id,
-		            error->code,
 		            error->message);
 
 		callback (self, call_id, NULL, setting_name, error, callback_data);
@@ -842,19 +841,17 @@ agent_secrets_done_cb (NMAgentManager *manager,
 						    call_id);
 			}
 		} else {
-			nm_log_dbg (LOGD_SETTINGS, "(%s/%s:%u) failed to update with agent secrets: (%d) %s",
+			nm_log_dbg (LOGD_SETTINGS, "(%s/%s:%u) failed to update with agent secrets: %s",
 			            nm_connection_get_uuid (NM_CONNECTION (self)),
 			            setting_name,
 			            call_id,
-			            local->code,
 			            local->message);
 		}
 	} else {
-		nm_log_dbg (LOGD_SETTINGS, "(%s/%s:%u) failed to update with existing secrets: (%d) %s",
+		nm_log_dbg (LOGD_SETTINGS, "(%s/%s:%u) failed to update with existing secrets: %s",
 		            nm_connection_get_uuid (NM_CONNECTION (self)),
 		            setting_name,
 		            call_id,
-		            local->code,
 		            local->message);
 	}
 
@@ -1707,8 +1704,8 @@ nm_settings_connection_read_and_fill_timestamp (NMSettingsConnection *connection
 		priv->timestamp = timestamp;
 		priv->timestamp_set = TRUE;
 	} else {
-		nm_log_dbg (LOGD_SETTINGS, "failed to read connection timestamp for '%s': (%d) %s",
-		            connection_uuid, err->code, err->message);
+		nm_log_dbg (LOGD_SETTINGS, "failed to read connection timestamp for '%s': %s",
+		            connection_uuid, err->message);
 		g_clear_error (&err);
 	}
 	g_key_file_free (timestamps_file);

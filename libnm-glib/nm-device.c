@@ -2086,10 +2086,10 @@ deactivate_cb (DBusGProxy *proxy,
 	if (info->fn)
 		info->fn (info->device, error, info->user_data);
 	else if (error) {
-		g_warning ("%s: device %s deactivation failed: (%d) %s",
+		g_warning ("%s: device %s deactivation failed: %s",
 		           __func__,
 		           nm_object_get_path (NM_OBJECT (info->device)),
-		           error->code, error->message);
+		           error->message);
 	}
 	g_clear_error (&error);
 

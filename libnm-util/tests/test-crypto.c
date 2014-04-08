@@ -100,8 +100,8 @@ test_load_cert (const char *path, const char *desc)
 
 	array = crypto_load_and_verify_certificate (path, &format, &error);
 	ASSERT (array != NULL, desc,
-	        "couldn't read certificate file '%s': %d %s",
-	        path, error->code, error->message);
+	        "couldn't read certificate file '%s': %s",
+	        path, error->message);
 
 	ASSERT (format == NM_CRYPTO_FILE_FORMAT_X509, desc,
 	        "%s: unexpected certificate format (expected %d, got %d)",
@@ -152,8 +152,8 @@ test_load_private_key (const char *path,
 	}
 
 	ASSERT (array != NULL, desc,
-	        "couldn't read private key file '%s': %d %s",
-	        path, error->code, error->message);
+	        "couldn't read private key file '%s': %s",
+	        path, error->message);
 
 	ASSERT (key_type == NM_CRYPTO_KEY_TYPE_RSA, desc,
 	        "%s: unexpected private key type (expected %d, got %d)",
@@ -163,8 +163,8 @@ test_load_private_key (const char *path,
 		/* Compare the crypto decrypted key against a known-good decryption */
 		decrypted = file_to_byte_array (decrypted_path);
 		ASSERT (decrypted != NULL, desc,
-		        "couldn't read decrypted private key file '%s': %d %s",
-		        decrypted_path, error->code, error->message);
+		        "couldn't read decrypted private key file '%s': %s",
+		        decrypted_path, error->message);
 
 		ASSERT (decrypted->len > 0, desc, "decrypted key file invalid (size 0)");
 
@@ -199,8 +199,8 @@ test_load_pkcs12 (const char *path,
 	} else {
 		ASSERT (format == NM_CRYPTO_FILE_FORMAT_PKCS12, desc,
 			    "%s: unexpected PKCS#12 private key file format (expected %d, got "
-			    "%d): %d %s",
-			    path, NM_CRYPTO_FILE_FORMAT_PKCS12, format, error->code, error->message);
+			    "%d): %s",
+			    path, NM_CRYPTO_FILE_FORMAT_PKCS12, format, error->message);
 	}
 }
 
@@ -214,8 +214,8 @@ test_load_pkcs12_no_password (const char *path, const char *desc)
 	format = crypto_verify_private_key (path, NULL, &error);
 	ASSERT (format == NM_CRYPTO_FILE_FORMAT_PKCS12, desc,
 		    "%s: unexpected PKCS#12 private key file format (expected %d, got "
-		    "%d): %d %s",
-		    path, NM_CRYPTO_FILE_FORMAT_PKCS12, format, error->code, error->message);
+		    "%d): %s",
+		    path, NM_CRYPTO_FILE_FORMAT_PKCS12, format, error->message);
 }
 
 static void
@@ -251,8 +251,8 @@ test_load_pkcs8 (const char *path,
 	} else {
 		ASSERT (format == NM_CRYPTO_FILE_FORMAT_RAW_KEY, desc,
 			    "%s: unexpected PKCS#8 private key file format (expected %d, got "
-			    "%d): %d %s",
-			    path, NM_CRYPTO_FILE_FORMAT_RAW_KEY, format, error->code, error->message);
+			    "%d): %s",
+			    path, NM_CRYPTO_FILE_FORMAT_RAW_KEY, format, error->message);
 	}
 }
 
@@ -289,8 +289,8 @@ test_encrypt_private_key (const char *path,
 
 	array = crypto_decrypt_private_key (path, password, &key_type, &error);
 	ASSERT (array != NULL, desc,
-	        "couldn't read private key file '%s': %d %s",
-	        path, error->code, error->message);
+	        "couldn't read private key file '%s': %s",
+	        path, error->message);
 
 	ASSERT (key_type == NM_CRYPTO_KEY_TYPE_RSA, desc,
 	        "%s: unexpected private key type (expected %d, got %d)",
@@ -302,15 +302,15 @@ test_encrypt_private_key (const char *path,
 	else
 		encrypted = nm_utils_rsa_key_encrypt (array, password, NULL, &error);
 	ASSERT (encrypted != NULL, desc,
-	        "couldn't re-encrypt private key file '%s': %d %s",
-	        path, error->code, error->message);
+	        "couldn't re-encrypt private key file '%s': %s",
+	        path, error->message);
 
 	/* Then re-decrypt the private key */
 	key_type = NM_CRYPTO_KEY_TYPE_UNKNOWN;
 	re_decrypted = crypto_decrypt_private_key_data (encrypted, password, &key_type, &error);
 	ASSERT (re_decrypted != NULL, desc,
-	        "couldn't read private key file '%s': %d %s",
-	        path, error->code, error->message);
+	        "couldn't read private key file '%s': %s",
+	        path, error->message);
 
 	ASSERT (key_type == NM_CRYPTO_KEY_TYPE_RSA, desc,
 	        "%s: unexpected private key type (expected %d, got %d)",

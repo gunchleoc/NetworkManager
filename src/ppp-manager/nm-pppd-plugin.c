@@ -275,8 +275,8 @@ get_credentials (char *username, char *password)
 	                        G_TYPE_STRING, &my_username,
 	                        G_TYPE_STRING, &my_password,
 	                        G_TYPE_INVALID)) {
-		g_warning ("nm-ppp-plugin: (%s): could not get secrets: (%d) %s",
-		           __func__, err->code, err->message);
+		g_warning ("nm-ppp-plugin: (%s): could not get secrets: %s",
+		           __func__, err->message);
 		g_error_free (err);
 		return -1;
 	}
@@ -331,8 +331,8 @@ plugin_init (void)
 
 	bus = dbus_g_bus_get (DBUS_BUS_SYSTEM, &err);
 	if (!bus) {
-		g_warning ("nm-pppd-plugin: (%s): couldn't connect to system bus: (%d) %s",
-		           __func__, err->code, err->message);
+		g_warning ("nm-pppd-plugin: (%s): couldn't connect to system bus: %s",
+		           __func__, err->message);
 		g_error_free (err);
 		return -1;
 	}
