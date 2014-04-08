@@ -120,7 +120,7 @@ emit_error_helper (NMSupplicantInterface *self,
 {
 	const char *name = NULL;
 
-	if (err->domain == DBUS_GERROR && err->code == DBUS_GERROR_REMOTE_EXCEPTION)
+	if (g_error_matches (err, DBUS_GERROR, DBUS_GERROR_REMOTE_EXCEPTION))
 		name = dbus_g_error_get_name (err);
 
 	g_signal_emit (self, signals[CONNECTION_ERROR], 0, name, err->message);

@@ -1651,7 +1651,7 @@ nm_settings_connection_update_timestamp (NMSettingsConnection *connection,
 	/* Save timestamp to timestamps database file */
 	timestamps_file = g_key_file_new ();
 	if (!g_key_file_load_from_file (timestamps_file, SETTINGS_TIMESTAMPS_FILE, G_KEY_FILE_KEEP_COMMENTS, &error)) {
-		if (!(error->domain == G_FILE_ERROR && error->code == G_FILE_ERROR_NOENT))
+		if (!g_error_matches (error, G_FILE_ERROR, G_FILE_ERROR_NOENT))
 			nm_log_warn (LOGD_SETTINGS, "error parsing timestamps file '%s': %s", SETTINGS_TIMESTAMPS_FILE, error->message);
 		g_clear_error (&error);
 	}

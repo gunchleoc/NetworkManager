@@ -5978,7 +5978,7 @@ load_history_cmds (const char *uuid)
 	filename = g_build_filename (g_get_home_dir (), NMCLI_EDITOR_HISTORY, NULL);
 	kf = g_key_file_new ();
 	if (!g_key_file_load_from_file (kf, filename, G_KEY_FILE_KEEP_COMMENTS, &err)) {
-		if (err->code == G_KEY_FILE_ERROR_PARSE)
+		if (g_error_matches (err, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_PARSE))
 			printf ("Warning: %s parse error: %s\n", filename, err->message);
 		g_key_file_free (kf);
 		g_free (filename);
@@ -6013,8 +6013,8 @@ save_history_cmds (const char *uuid)
 		filename = g_build_filename (g_get_home_dir (), NMCLI_EDITOR_HISTORY, NULL);
 		kf = g_key_file_new ();
 		if (!g_key_file_load_from_file (kf, filename, G_KEY_FILE_KEEP_COMMENTS, &err)) {
-			if (   err->code != G_FILE_ERROR_NOENT
-			    && err->code != G_KEY_FILE_ERROR_NOT_FOUND) {
+			if (   !g_error_matches (err, G_FILE_ERROR, G_FILE_ERROR_NOENT)
+			    && !g_error_matches (err, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_NOT_FOUND)) {
 				printf ("Warning: %s parse error: %s\n", filename, err->message);
 				g_key_file_free (kf);
 				g_free (filename);
@@ -8378,7 +8378,7 @@ do_connection_reload (NmCli *nmc, int argc, char **argv)
 
 	if (!nm_remote_settings_reload_connections (nmc->system_settings, &error)) {
 		g_string_printf (nmc->return_text, _("Error: %s."), error->message);
-		if (error->code == NM_REMOTE_SETTINGS_ERROR_SERVICE_UNAVAILABLE)
+		if (g_error_matches (error, NM_REMOTE_SETTINGS_ERROR, NM_REMOTE_SETTINGS_ERROR_SERVICE_UNAVAILABLE))
 			nmc->return_value = NMC_RESULT_ERROR_NM_NOT_RUNNING;
 		else
 			nmc->return_value = NMC_RESULT_ERROR_UNKNOWN;
