@@ -233,7 +233,7 @@ typedef struct _NMDevicePrivate {
 	char *        physical_port_id;
 	guint         dev_id;
 
-	gboolean                managed_touched_by_user;
+	NMUnmanagedFlags        unmanaged_mask;
 	NMUnmanagedFlags        unmanaged_flags;
 	gboolean                is_nm_owned; /* whether the device is a device owned and created by NM */
 	DeleteOnDeactivateData *delete_on_deactivate_data; /* data for scheduled cleanup when deleting link (g_idle_add) */
@@ -392,8 +392,6 @@ static NMActStageReturn linklocal6_start (NMDevice *self);
 
 static void _carrier_wait_check_queued_act_request (NMDevice *self);
 
-static gboolean nm_device_get_default_unmanaged (NMDevice *self);
-
 static const char *_activation_func_to_string (ActivationHandleFunc func);
 static void activation_source_handle_cb (NMDevice *self, int family);
 
@@ -404,10 +402,6 @@ static void _set_state_full (NMDevice *self,
 
 static gboolean queued_ip4_config_change (gpointer user_data);
 static gboolean queued_ip6_config_change (gpointer user_data);
-
-static void _set_unmanaged_flags (NMDevice *self,
-                                  NMUnmanagedFlags flags,
-                                  gboolean unmanaged);
 
 /***********************************************************/
 
@@ -1202,7 +1196,7 @@ nm_device_finish_init (NMDevice *self)
 			gboolean platform_unmanaged = FALSE;
 
 			if (nm_platform_link_get_unmanaged (NM_PLATFORM_GET, priv->ifindex, &platform_unmanaged))
-				nm_device_set_unmanaged_flags_initial (self, NM_UNMANAGED_DEFAULT, platform_unmanaged);
+				nm_device_set_unmanaged_flags_initial (self, NM_UNMANAGED_USER_UDEV, platform_unmanaged);
 		} else {
 			/* Hardware and externally-created software links stay unmanaged
 			 * until they are fully initialized by the platform. NM created
@@ -1267,7 +1261,7 @@ carrier_changed (NMDevice *self, gboolean carrier)
 {
 	NMDevicePrivate *priv = NM_DEVICE_GET_PRIVATE (self);
 
-	if (!nm_device_get_managed (self))
+	if (!nm_device_get_managed (self, FALSE))
 		return;
 
 	nm_device_recheck_available_connections (self);
@@ -1526,7 +1520,7 @@ device_link_changed (NMDevice *self)
 
 		if (nm_platform_link_get_unmanaged (NM_PLATFORM_GET, priv->ifindex, &platform_unmanaged)) {
 			nm_device_set_unmanaged_flags (self,
-			                               NM_UNMANAGED_DEFAULT,
+			                               NM_UNMANAGED_USER_UDEV,
 			                               platform_unmanaged,
 			                               NM_DEVICE_STATE_REASON_USER_REQUESTED);
 		}
@@ -1549,40 +1543,30 @@ device_link_changed (NMDevice *self)
 		/* Manage externally-created software interfaces only when they are IFF_UP */
 		g_assert (priv->ifindex > 0);
 		if (NM_DEVICE_GET_CLASS (self)->can_unmanaged_external_down (self)) {
-			gboolean external_down = !!nm_device_get_unmanaged_flags (self, NM_UNMANAGED_EXTERNAL_DOWN);
-
-			if (external_down && NM_FLAGS_HAS (info.flags, IFF_UP)) {
-				if (nm_device_get_state (self) < NM_DEVICE_STATE_DISCONNECTED) {
-					/* Ensure the assume check is queued before any queued state changes
-					 * from the transition to UNAVAILABLE.
-					 */
-					nm_device_queue_recheck_assume (self);
-
-					/* Resetting the EXTERNAL_DOWN flag may change the device's state
-					 * to UNAVAILABLE.  To ensure that the state change doesn't touch
-					 * the device before assumption occurs, pass
-					 * NM_DEVICE_STATE_REASON_CONNECTION_ASSUMED as the reason.
-					 */
-					nm_device_set_unmanaged_flags (self,
-					                               NM_UNMANAGED_EXTERNAL_DOWN,
-					                               FALSE,
-					                               NM_DEVICE_STATE_REASON_CONNECTION_ASSUMED);
-				} else {
-					/* Don't trigger a state change; if the device is in a
-					 * state higher than UNAVAILABLE, it is already IFF_UP
-					 * or an explicit activation request was received.
-					 */
-					_set_unmanaged_flags (self, NM_UNMANAGED_EXTERNAL_DOWN, FALSE);
-				}
-			} else if (!external_down && !NM_FLAGS_HAS (info.flags, IFF_UP) && nm_device_get_state (self) <= NM_DEVICE_STATE_DISCONNECTED) {
-				/* If the device is already disconnected and is set !IFF_UP,
-				 * unmanage it.
+			if (   priv->up
+			    && !!nm_device_get_unmanaged_flags (self, NM_UNMANAGED_EXTERNAL_DOWN)) {
+				/* Ensure the assume check is queued before any queued state changes
+				 * from the transition to UNAVAILABLE.
 				 */
-				nm_device_set_unmanaged_flags (self,
-				                               NM_UNMANAGED_EXTERNAL_DOWN,
-				                               TRUE,
-				                               NM_DEVICE_STATE_REASON_USER_REQUESTED);
+				nm_device_queue_recheck_assume (self);
 			}
+
+			/* In case of @priv->up, resetting the EXTERNAL_DOWN flag may change the device's
+			 * state to UNAVAILABLE. To ensure that the state change doesn't touch
+			 * the device before assumption occurs, pass NM_DEVICE_STATE_REASON_CONNECTION_ASSUMED
+			 * as the reason.
+			 *
+			 * In case of !@priv->up, and the device is already unmanaged for other reasons, the
+			 * state-change-reason has no effect.
+			 * If the device is managed for an explict user-request, the state-change-reason
+			 * also has no effect, because the device stays managed.
+			 *
+			 * The state-change-reason only has effect if the device was assumed
+			 * and is now to be unmanaged. */
+			nm_device_set_unmanaged_flags (self,
+			                               NM_UNMANAGED_EXTERNAL_DOWN,
+			                               !priv->up,
+			                               NM_DEVICE_STATE_REASON_CONNECTION_ASSUMED);
 		}
 	}
 
@@ -2586,18 +2570,11 @@ nm_device_set_autoconnect (NMDevice *self, gboolean autoconnect)
 
 	g_return_if_fail (NM_IS_DEVICE (self));
 
-	priv = NM_DEVICE_GET_PRIVATE (self);
-	if (priv->autoconnect == autoconnect)
-		return;
+	autoconnect = !!autoconnect;
 
-	if (autoconnect) {
-		/* Default-unmanaged devices never autoconnect */
-		if (!nm_device_get_default_unmanaged (self)) {
-			priv->autoconnect = TRUE;
-			g_object_notify (G_OBJECT (self), NM_DEVICE_AUTOCONNECT);
-		}
-	} else {
-		priv->autoconnect = FALSE;
+	priv = NM_DEVICE_GET_PRIVATE (self);
+	if (priv->autoconnect != autoconnect) {
+		priv->autoconnect = autoconnect;
 		g_object_notify (G_OBJECT (self), NM_DEVICE_AUTOCONNECT);
 	}
 }
@@ -6919,6 +6896,7 @@ _device_activate (NMDevice *self, NMActRequest *req)
 
 	g_return_val_if_fail (NM_IS_DEVICE (self), FALSE);
 	g_return_val_if_fail (NM_IS_ACT_REQUEST (req), FALSE);
+	g_return_val_if_fail (nm_device_get_managed (self, FALSE), FALSE);
 
 	/* Ensure the activation request is still valid; the master may have
 	 * already failed in which case activation of this device should not proceed.
@@ -6936,13 +6914,6 @@ _device_activate (NMDevice *self, NMActRequest *req)
 	       nm_connection_get_uuid (connection));
 
 	delete_on_deactivate_unschedule (self);
-
-	/* Move default unmanaged devices to DISCONNECTED state here */
-	if (nm_device_get_default_unmanaged (self) && priv->state == NM_DEVICE_STATE_UNMANAGED) {
-		nm_device_state_changed (self,
-		                         NM_DEVICE_STATE_DISCONNECTED,
-		                         NM_DEVICE_STATE_REASON_NOW_MANAGED);
-	}
 
 	/* note: don't notify D-Bus of the new AC here, but do it later when
 	 * changing state to PREPARE so that the two properties change together.
@@ -8280,84 +8251,183 @@ device_ipx_changed (NMPlatform *platform,
 	}
 }
 
+/*****************************************************************************/
+
+NM_UTILS_FLAGS2STR_DEFINE (nm_unmanaged_flags2str, NMUnmanagedFlags,
+	NM_UTILS_FLAGS2STR (NM_UNMANAGED_INTERNAL, "internal"),
+	NM_UTILS_FLAGS2STR (NM_UNMANAGED_PARENT, "parent"),
+	NM_UTILS_FLAGS2STR (NM_UNMANAGED_LOOPBACK, "loopback"),
+	NM_UTILS_FLAGS2STR (NM_UNMANAGED_PLATFORM_INIT, "platform-init"),
+	NM_UTILS_FLAGS2STR (NM_UNMANAGED_USER_EXPLICIT, "user-explicit"),
+	NM_UTILS_FLAGS2STR (NM_UNMANAGED_BY_DEFAULT, "by-default"),
+	NM_UTILS_FLAGS2STR (NM_UNMANAGED_USER_CONFIG, "user-config"),
+	NM_UTILS_FLAGS2STR (NM_UNMANAGED_USER_UDEV, "user-udev"),
+	NM_UTILS_FLAGS2STR (NM_UNMANAGED_EXTERNAL_DOWN, "external-down"),
+);
+
+static gboolean
+_get_managed (NMUnmanagedFlags flags, NMUnmanagedFlags mask, gboolean for_user_request)
+{
+	/* Evaluate the managed state based on the unmanaged flags.
+	 *
+	 * Some flags are authoritative, meaning they always cause
+	 * the device to be unmanaged (e.g. @NM_UNMANAGED_PLATFORM_INIT).
+	 *
+	 * OTOH, some flags can be overwritten. For example NM_UNMANAGED_USER_CONFIG
+	 * is ignored once NM_UNMANAGED_USER_EXPLICIT is set. The idea is that
+	 * the flag from the configuration has no effect once the user explicitly
+	 * touches the unmanaged flags. */
+
+	if (for_user_request) {
+
+		/* @for_user_request can make the result only ~more~ managed.
+		 * If the flags already indicate a managed state for a non-user-request,
+		 * then it is also managed for an explict user-request.
+		 *
+		 * Effectively, this check is redundant, as the code below already
+		 * already ensures that. Still, express this invariant explictly here. */
+		if (_get_managed (flags, mask, FALSE))
+			return TRUE;
+
+		/* A for-user-request, is effectively the same as pretending
+		 * that user-dbus flag is cleared. */
+		mask |= NM_UNMANAGED_USER_EXPLICIT;
+		flags &= ~NM_UNMANAGED_USER_EXPLICIT;
+	}
+
+	if (   NM_FLAGS_ANY (mask, NM_UNMANAGED_USER_CONFIG)
+	    && !NM_FLAGS_ANY (flags, NM_UNMANAGED_USER_CONFIG)) {
+		/* NM_UNMANAGED_USER_CONFIG can only explicitly unmanage a device. It cannot
+		 * *manage* it. Having NM_UNMANAGED_USER_CONFIG explicitly not set, is the
+		 * same as having it not set at all. */
+		mask &= ~NM_UNMANAGED_USER_CONFIG;
+	}
+
+	if (NM_FLAGS_ANY (mask, NM_UNMANAGED_USER_UDEV | NM_UNMANAGED_USER_CONFIG)) {
+		/* configuration from udev or nm-config overwrites the by-default flag
+		 * which is based on the device type. */
+		flags &= ~NM_UNMANAGED_BY_DEFAULT;
+	}
+
+	if (NM_FLAGS_HAS (mask, NM_UNMANAGED_USER_CONFIG)) {
+		/* configuration from configuration overwrites the setting
+		 * originating from udev.
+		 *
+		 * Actually, this check has no effect, because at this point,
+		 * the device also is NM_UNMANAGED_USER_CONFIG. Thus clearing
+		 * NM_UNMANAGED_USER_UDEV doesn't change the outcome.
+		 * Just be explicit about this. */
+		flags &= ~NM_UNMANAGED_USER_UDEV;
+	}
+
+	if (NM_FLAGS_HAS (mask, NM_UNMANAGED_USER_EXPLICIT)) {
+		/* if the device is managed by user-decision, certain other flags
+		 * are ignored. */
+
+		flags &= ~(  NM_UNMANAGED_BY_DEFAULT
+		           | NM_UNMANAGED_USER_CONFIG
+		           | NM_UNMANAGED_USER_UDEV
+		           | NM_UNMANAGED_EXTERNAL_DOWN);
+	}
+
+	return flags == NM_UNMANAGED_NONE;
+}
+
 /**
  * nm_device_get_managed():
  * @self: the #NMDevice
+ * @for_user_request: whether to check the flags for an explict user-request
  *
- * Returns: %TRUE if the device is managed
+ * Whether the device is unmanaged according to the unmanaged flags.
+ *
+ * Returns: %TRUE if the device is unmanaged because of the flags.
  */
 gboolean
-nm_device_get_managed (NMDevice *self)
+nm_device_get_managed (NMDevice *self, gboolean for_user_request)
 {
 	NMDevicePrivate *priv;
-	gboolean managed;
 
 	g_return_val_if_fail (NM_IS_DEVICE (self), FALSE);
 
 	priv = NM_DEVICE_GET_PRIVATE (self);
 
-	/* Return the composite of all managed flags.  However, if the device
-	 * is a default-unmanaged device, and would be managed except for the
-	 * default-unmanaged flag (eg, only NM_UNMANAGED_DEFAULT is set) then
-	 * the device is managed whenever it's not in the UNMANAGED state.
-	 */
-	managed = !NM_FLAGS_ANY (priv->unmanaged_flags, ~NM_UNMANAGED_DEFAULT);
-	if (managed && NM_FLAGS_HAS (priv->unmanaged_flags, NM_UNMANAGED_DEFAULT))
-		managed = (priv->state > NM_DEVICE_STATE_UNMANAGED);
+	return _get_managed (priv->unmanaged_flags, priv->unmanaged_mask, for_user_request);
+}
 
-	return managed;
+static const char *
+_get_managed_as_string (NMUnmanagedFlags flags, NMUnmanagedFlags mask)
+{
+	if (_get_managed (flags, mask, FALSE))
+		return "managed";
+	if (!_get_managed (flags, mask, TRUE))
+		return "unmanaged";
+	return "manageable";
 }
 
 /**
  * nm_device_get_unmanaged_flags():
  * @self: the #NMDevice
- * @flag: return only the selected flags
+ * @flag: the unmanaged flags to check.
  *
- * Returns: the unmanage flags of the device (filtered with @flag)
+ * Return the unmanaged flags of the device.
+ *
+ * Returns: the flags of the device ( & @flag)
  */
 NMUnmanagedFlags
 nm_device_get_unmanaged_flags (NMDevice *self, NMUnmanagedFlags flag)
 {
-	return NM_DEVICE_GET_PRIVATE (self)->unmanaged_flags & flag;
-}
+	g_return_val_if_fail (NM_IS_DEVICE (self), FALSE);
+	g_return_val_if_fail (flag != NM_UNMANAGED_NONE, FALSE);
 
-/**
- * nm_device_get_default_unmanaged():
- * @self: the #NMDevice
- *
- * Returns: %TRUE if the device is by default unmanaged
- */
-static gboolean
-nm_device_get_default_unmanaged (NMDevice *self)
-{
-	return !!nm_device_get_unmanaged_flags (self, NM_UNMANAGED_DEFAULT);
+	return NM_DEVICE_GET_PRIVATE (self)->unmanaged_flags & flag;
 }
 
 static void
 _set_unmanaged_flags (NMDevice *self,
                       NMUnmanagedFlags flags,
-                      gboolean unmanaged)
+                      gboolean unmanaged,
+                      gboolean is_initial,
+                      NMDeviceStateReason reason)
 {
 	NMDevicePrivate *priv = NM_DEVICE_GET_PRIVATE (self);
+	NMUnmanagedFlags old_flags, old_mask;
+	const char *operation = NULL;
 
+	if (!flags)
+		g_return_if_reached ();
+
+	old_flags = priv->unmanaged_flags;
+	old_mask = priv->unmanaged_mask;
+
+	priv->unmanaged_mask |= flags;
 	if (unmanaged) {
-		if (!NM_FLAGS_ALL (priv->unmanaged_flags, flags)) {
-			_LOGD (LOGD_DEVICE, "unmanaged: flags set to 0x%0llx (was 0x%0llx, %s 0x%0llx)",
-			       (long long unsigned) (priv->unmanaged_flags | flags),
-			       (long long unsigned) priv->unmanaged_flags,
-			       "set",
-			       (long long unsigned) flags);
-			priv->unmanaged_flags |= flags;
-		}
+		priv->unmanaged_flags |= flags;
+		operation = "set";
 	} else {
-		if (NM_FLAGS_ANY (priv->unmanaged_flags, flags)) {
-			_LOGD (LOGD_DEVICE, "unmanaged: flags set to 0x%0llx (was 0x%0llx, %s 0x%0llx)",
-			       (long long unsigned) (priv->unmanaged_flags & (~flags)),
-			       (long long unsigned) priv->unmanaged_flags,
-			       "clear",
-			       (long long unsigned) flags);
-			priv->unmanaged_flags &= ~flags;
-		}
+		priv->unmanaged_flags &= ~flags;
+		operation = "clear";
+	}
+
+	if (   old_flags != priv->unmanaged_flags
+	    || old_mask != priv->unmanaged_mask) {
+		char str1[128];
+		char str2[128];
+		char str3[128];
+
+#define _FMT(flags, mask, str) \
+		nm_unmanaged_flags2str ((flags), str, sizeof (str)), \
+		(flags) ? "=" : "", \
+		(flags), \
+		(mask), \
+		_get_managed_as_string ((flags), (mask))
+		_LOGD (LOGD_DEVICE, "unmanaged: flags set to [%s%s0x%0x]/0x%x/%s (was [%s%s0x%0x]/0x%x/%s, %s [%s=0x%0x], reason %s)",
+		       _FMT (priv->unmanaged_flags, priv->unmanaged_mask, str1),
+		       _FMT (old_flags, old_mask, str2),
+		       operation,
+		       nm_unmanaged_flags2str (flags, str3, sizeof (str3)),
+		       flags,
+		       is_initial ? "*initial*" : reason_to_string (reason));
+#undef _FMT
 	}
 }
 
@@ -8375,16 +8445,12 @@ nm_device_set_unmanaged_flags (NMDevice *self,
 
 	priv = NM_DEVICE_GET_PRIVATE (self);
 
-	was_managed = nm_device_get_managed (self);
-	_set_unmanaged_flags (self, flag, unmanaged);
-	now_managed = nm_device_get_managed (self);
+	was_managed = nm_device_get_managed (self, FALSE);
+	_set_unmanaged_flags (self, flag, unmanaged, FALSE, reason);
+	now_managed = nm_device_get_managed (self, FALSE);
 
 	if (was_managed != now_managed) {
-		_LOGD (LOGD_DEVICE, "now %s", unmanaged ? "unmanaged" : "managed");
-
-		g_object_notify (G_OBJECT (self), NM_DEVICE_MANAGED);
-
-		if (unmanaged)
+		if (!now_managed)
 			nm_device_state_changed (self, NM_DEVICE_STATE_UNMANAGED, reason);
 		else if (nm_device_get_state (self) == NM_DEVICE_STATE_UNMANAGED)
 			nm_device_state_changed (self, NM_DEVICE_STATE_UNAVAILABLE, reason);
@@ -8401,12 +8467,9 @@ nm_device_set_unmanaged_flags_by_device_spec (NMDevice *self, const GSList *unma
 
 	priv = NM_DEVICE_GET_PRIVATE (self);
 
-	if (priv->managed_touched_by_user)
-		return;
-
 	unmanaged = nm_device_spec_match_list (self, unmanaged_specs);
 	nm_device_set_unmanaged_flags (self,
-	                               NM_UNMANAGED_USER,
+	                               NM_UNMANAGED_USER_CONFIG,
 	                               unmanaged,
 	                               unmanaged
 	                                   ? NM_DEVICE_STATE_REASON_NOW_UNMANAGED
@@ -8436,7 +8499,7 @@ nm_device_set_unmanaged_flags_initial (NMDevice *self,
 	priv = NM_DEVICE_GET_PRIVATE (self);
 	g_return_if_fail (priv->initialized == FALSE);
 
-	_set_unmanaged_flags (self, flag, unmanaged);
+	_set_unmanaged_flags (self, flag, unmanaged, TRUE, NM_DEVICE_STATE_REASON_NONE);
 }
 
 void
@@ -8620,7 +8683,10 @@ _nm_device_check_connection_available (NMDevice *self,
 	if (state < NM_DEVICE_STATE_UNMANAGED)
 		return FALSE;
 	if (   state < NM_DEVICE_STATE_UNAVAILABLE
-	    && nm_device_get_unmanaged_flags (self, NM_UNMANAGED_ALL & ~NM_UNMANAGED_DEFAULT))
+	    && (   (   !NM_FLAGS_ANY (flags, NM_DEVICE_CHECK_CON_AVAILABLE_FOR_USER_REQUEST)
+	            && !nm_device_get_managed (self, FALSE))
+	        || (    NM_FLAGS_ANY (flags, NM_DEVICE_CHECK_CON_AVAILABLE_FOR_USER_REQUEST)
+	            && !nm_device_get_managed (self, TRUE))))
 		return FALSE;
 	if (   state < NM_DEVICE_STATE_DISCONNECTED
 	    && !nm_device_is_software (self)
@@ -9466,8 +9532,7 @@ _set_state_full (NMDevice *self,
 	}
 
 	/* Update the available connections list when a device first becomes available */
-	if (   (state >= NM_DEVICE_STATE_DISCONNECTED && old_state < NM_DEVICE_STATE_DISCONNECTED)
-	    || nm_device_get_default_unmanaged (self))
+	if (state >= NM_DEVICE_STATE_DISCONNECTED && old_state < NM_DEVICE_STATE_DISCONNECTED)
 		nm_device_recheck_available_connections (self);
 
 	/* Handle the new state here; but anything that could trigger
@@ -9567,11 +9632,7 @@ _set_state_full (NMDevice *self,
 			                                   NM_DEVICE_STATE_REASON_NONE,
 			                                   NM_DEVICE_STATE_REASON_NONE);
 		} else {
-			if (old_state == NM_DEVICE_STATE_UNMANAGED)
-				_LOGD (LOGD_DEVICE, "device not yet available for transition to DISCONNECTED");
-			else if (   old_state > NM_DEVICE_STATE_UNAVAILABLE
-			         && nm_device_get_default_unmanaged (self))
-				nm_device_queue_state (self, NM_DEVICE_STATE_UNMANAGED, NM_DEVICE_STATE_REASON_NONE);
+			_LOGD (LOGD_DEVICE, "device not yet available for transition to DISCONNECTED");
 		}
 		break;
 	case NM_DEVICE_STATE_DEACTIVATING:
@@ -9617,9 +9678,6 @@ _set_state_full (NMDevice *self,
 				break;
 			/* fall through */
 		}
-		if (   old_state > NM_DEVICE_STATE_DISCONNECTED
-		    && nm_device_get_default_unmanaged (self))
-			nm_device_queue_state (self, NM_DEVICE_STATE_UNMANAGED, NM_DEVICE_STATE_REASON_NONE);
 		break;
 	case NM_DEVICE_STATE_ACTIVATED:
 		_LOGI (LOGD_DEVICE, "Activation: successful, device activated.");
@@ -9734,6 +9792,9 @@ _set_state_full (NMDevice *self,
 		g_object_unref (req);
 
 	priv->in_state_changed = FALSE;
+
+	if ((old_state > NM_DEVICE_STATE_UNMANAGED) != (state > NM_DEVICE_STATE_UNMANAGED))
+		g_object_notify (G_OBJECT (self), NM_DEVICE_MANAGED);
 }
 
 void
@@ -10084,6 +10145,7 @@ nm_device_init (NMDevice *self)
 	priv->rfkill_type = RFKILL_TYPE_UNKNOWN;
 	priv->autoconnect = DEFAULT_AUTOCONNECT;
 	priv->unmanaged_flags = NM_UNMANAGED_INTERNAL;
+	priv->unmanaged_mask = priv->unmanaged_flags;
 	priv->available_connections = g_hash_table_new_full (g_direct_hash, g_direct_equal, g_object_unref, NULL);
 	priv->ip6_saved_properties = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_free);
 
@@ -10160,15 +10222,6 @@ constructed (GObject *object)
 	                  NM_CP_SIGNAL_CONNECTION_UPDATED,
 	                  G_CALLBACK (cp_connection_updated),
 	                  self);
-
-	/* Update default-unmanaged device available connections immediately,
-	 * since they don't transition from UNMANAGED (and thus the state handler
-	 * doesn't run and update them) until something external happens.
-	 */
-	if (nm_device_get_default_unmanaged (self)) {
-		nm_device_set_autoconnect (self, FALSE);
-		nm_device_recheck_available_connections (self);
-	}
 
 	G_OBJECT_CLASS (nm_device_parent_class)->constructed (object);
 
@@ -10274,7 +10327,6 @@ set_property (GObject *object, guint prop_id,
 	NMDevicePrivate *priv = NM_DEVICE_GET_PRIVATE (self);
 	const char *hw_addr, *p;
 	guint count;
-	gboolean val_bool;
 
 	switch (prop_id) {
 	case PROP_UDI:
@@ -10309,11 +10361,9 @@ set_property (GObject *object, guint prop_id,
 		priv->ip4_address = g_value_get_uint (value);
 		break;
 	case PROP_MANAGED:
-		val_bool = g_value_get_boolean (value);
-		priv->managed_touched_by_user = TRUE;
 		nm_device_set_unmanaged_flags (self,
-		                               NM_UNMANAGED_USER | (val_bool ? NM_UNMANAGED_DEFAULT : NM_UNMANAGED_NONE),
-		                               !val_bool,
+		                               NM_UNMANAGED_USER_EXPLICIT,
+		                               !g_value_get_boolean (value),
 		                               NM_DEVICE_STATE_REASON_USER_REQUESTED);
 		break;
 	case PROP_AUTOCONNECT:
@@ -10454,7 +10504,8 @@ get_property (GObject *object, guint prop_id,
 		g_value_set_uint (value, priv->link_type);
 		break;
 	case PROP_MANAGED:
-		g_value_set_boolean (value, nm_device_get_managed (self));
+		/* The managed state exposed on D-Bus only depends on the current device state alone. */
+		g_value_set_boolean (value, nm_device_get_state (self) > NM_DEVICE_STATE_UNMANAGED);
 		break;
 	case PROP_AUTOCONNECT:
 		g_value_set_boolean (value, priv->autoconnect);
