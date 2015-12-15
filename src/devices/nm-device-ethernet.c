@@ -1655,9 +1655,12 @@ link_changed (NMDevice *device, NMPlatformLink *info)
 }
 
 static gboolean
-is_available (NMDevice *self, NMDeviceCheckDevAvailableFlags flags)
+is_available (NMDevice *device, NMDeviceCheckDevAvailableFlags flags)
 {
-	return !!nm_device_get_initial_hw_address (self);
+	if (!NM_DEVICE_CLASS (nm_device_ethernet_parent_class)->is_available (device, flags))
+		return FALSE;
+
+	return !!nm_device_get_initial_hw_address (device);
 }
 
 static void
