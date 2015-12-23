@@ -64,6 +64,7 @@
 #include "nm-lldp-listener.h"
 #include "sd-ipv4ll.h"
 #include "nm-audit-manager.h"
+#include "nm-arping-manager.h"
 
 #include "nm-device-logging.h"
 _LOG_DECLARE_SELF (NMDevice);
@@ -193,6 +194,14 @@ typedef struct {
 	int ifindex;
 } DeleteOnDeactivateData;
 
+typedef void (*ArpingCallback) (NMDevice *, NMIP4Config **, gboolean);
+
+typedef struct {
+	ArpingCallback callback;
+	NMDevice *device;
+	NMIP4Config **configs;
+} ArpingData;
+
 typedef struct _NMDevicePrivate {
 	gboolean in_state_changed;
 	gboolean initialized;
@@ -300,7 +309,6 @@ typedef struct _NMDevicePrivate {
 	NMDhcp4Config * dhcp4_config;
 	guint           dhcp4_restart_id;
 
-	guint           arp_round2_id;
 	PingInfo        gw_ping;
 
 	/* dnsmasq stuff for shared connections */
@@ -314,6 +322,12 @@ typedef struct _NMDevicePrivate {
 	/* IPv4LL stuff */
 	sd_ipv4ll *    ipv4ll;
 	guint          ipv4ll_timeout;
+
+	/* IPv4 DAD stuff */
+	struct {
+		GSList *          dad_list;
+		NMArpingManager * announcing;
+	} arping;
 
 	/* IP6 configuration info */
 	NMIP6Config *  ip6_config;
@@ -3614,6 +3628,188 @@ nm_device_check_ip_failed (NMDevice *self, gboolean may_fail)
 }
 
 /*********************************************/
+/* IPv4 DAD stuff */
+
+static guint
+get_ipv4_dad_timeout (NMDevice *self)
+{
+	NMConnection *connection;
+	NMSettingIPConfig *s_ip4 = NULL;
+	gs_free char *value = NULL;
+	gint ret = 0;
+
+	connection = nm_device_get_applied_connection (self);
+	if (connection)
+		s_ip4 = nm_connection_get_setting_ip4_config (connection);
+
+	if (s_ip4) {
+		ret = nm_setting_ip_config_get_dad_timeout (s_ip4);
+
+		if (ret < 0) {
+			value = nm_config_data_get_connection_default (NM_CONFIG_GET_DATA,
+			                                               "ipv4.dad-timeout", self);
+			ret = _nm_utils_ascii_str_to_int64 (value, 10, -1,
+			                                    NM_SETTING_IP_CONFIG_DAD_TIMEOUT_MAX,
+			                                    -1);
+			ret = ret < 0 ? 0 : ret;
+		}
+	}
+
+	return ret;
+}
+
+static void
+arping_data_destroy (gpointer ptr)
+{
+	ArpingData *data = ptr;
+	int i;
+
+	if (data) {
+		for (i = 0; data->configs && data->configs[i]; i++)
+			g_object_unref (data->configs[i]);
+		g_free (data->configs);
+		g_free (data);
+	}
+}
+
+static void
+ipv4_manual_method_apply (NMDevice *self, NMIP4Config **configs, gboolean success)
+{
+	NMIP4Config *empty;
+
+	if (success) {
+		empty = nm_ip4_config_new (nm_device_get_ip_ifindex (self));
+		nm_device_activate_schedule_ip4_config_result (self, empty);
+	} else {
+		nm_device_state_changed (self, NM_DEVICE_STATE_FAILED,
+		                         NM_DEVICE_STATE_REASON_CONFIG_FAILED);
+	}
+}
+
+static void
+arping_manager_probe_terminated (NMArpingManager *arping_manager, ArpingData *data, gpointer unused)
+{
+	NMDevice *self;
+	NMDevicePrivate *priv;
+	const NMPlatformIP4Address *address;
+	gboolean result, success = TRUE;
+	int i, j;
+
+	g_assert (data);
+	self = data->device;
+	priv = NM_DEVICE_GET_PRIVATE (self);
+
+	for (i = 0; data->configs && data->configs[i]; i++) {
+		for (j = 0; j < nm_ip4_config_get_num_addresses (data->configs[i]); j++) {
+			address = nm_ip4_config_get_address (data->configs[i], j);
+			result = nm_arping_manager_check_address (arping_manager, address->address);
+			success &= result;
+
+			_NMLOG (result ? LOGL_DEBUG : LOGL_WARN,
+			        LOGD_DEVICE,
+			        "IPv4 DAD result: address %s is %s",
+			        nm_utils_inet4_ntop (address->address, NULL),
+			        result ? "unique" : "duplicate");
+		}
+	}
+
+	data->callback (self, data->configs, success);
+
+	priv->arping.dad_list = g_slist_remove (priv->arping.dad_list, arping_manager);
+	g_object_unref (arping_manager);
+	g_object_unref (self);
+}
+
+/**
+ * ipv4_dad_start:
+ * @self: device instance
+ * @configs: NULL-terminated array of IPv4 configurations
+ * @cb: callback function
+ *
+ * Start IPv4 DAD on device @self, check addresses in @configs and call @cb
+ * when the procedure ends. @cb will be called in any case, even if DAD can't
+ * be started. @configs will be unreferenced after @cb has been called.
+ */
+static void
+ipv4_dad_start (NMDevice *self, NMIP4Config **configs, ArpingCallback cb)
+{
+	NMDevicePrivate *priv = NM_DEVICE_GET_PRIVATE (self);
+	NMArpingManager *arping_manager;
+	const NMPlatformIP4Address *address;
+	ArpingData *data;
+	guint timeout;
+	gboolean ret, addr_found;
+	const guint8 *hw_addr;
+	size_t hw_addr_len = 0;
+	GError *error = NULL;
+	int i, j;
+
+	g_return_if_fail (NM_IS_DEVICE (self));
+	g_return_if_fail (configs);
+	g_return_if_fail (cb);
+
+	for (i = 0, addr_found = FALSE; configs[i]; i++) {
+		if (nm_ip4_config_get_num_addresses (configs[i]) > 0) {
+			addr_found = TRUE;
+			break;
+		}
+	}
+
+	timeout = get_ipv4_dad_timeout (self);
+	hw_addr = nm_platform_link_get_address (NM_PLATFORM_GET,
+	                                        nm_device_get_ip_ifindex (self),
+	                                        &hw_addr_len);
+
+	if (   !timeout
+	    || !hw_addr
+	    || !hw_addr_len
+	    || !addr_found
+	    || nm_device_uses_assumed_connection (self)) {
+
+		/* DAD not needed, signal success */
+		cb (self, configs, TRUE);
+
+		for (i = 0; configs[i]; i++)
+			g_object_unref (configs[i]);
+		g_free (configs);
+
+		return;
+	}
+
+	arping_manager = nm_arping_manager_new (nm_device_get_ip_ifindex (self));
+	priv->arping.dad_list = g_slist_append (priv->arping.dad_list, arping_manager);
+
+	data = g_new0 (ArpingData, 1);
+	data->configs = configs;
+	data->callback = cb;
+	data->device = g_object_ref (self);
+
+	for (i = 0; configs[i]; i++) {
+		for (j = 0; j < nm_ip4_config_get_num_addresses (configs[i]); j++) {
+			address = nm_ip4_config_get_address (configs[i], j);
+			nm_arping_manager_add_address (arping_manager, address->address);
+		}
+	}
+
+	g_signal_connect (arping_manager, NM_ARPING_MANAGER_PROBE_TERMINATED,
+	                  G_CALLBACK (arping_manager_probe_terminated), NULL);
+
+	ret = nm_arping_manager_start_probe (arping_manager, timeout,
+	                                     data, arping_data_destroy, &error);
+
+	if (!ret) {
+		_LOGW (LOGD_DEVICE, "arping probe failed: %s", error->message);
+
+		/* DAD could not be started, signal success */
+		cb (self, configs, TRUE);
+
+		arping_data_destroy (data);
+		priv->arping.dad_list = g_slist_remove (priv->arping.dad_list, arping_manager);
+		g_object_unref (arping_manager);
+	}
+}
+
+/*********************************************/
 /* IPv4LL stuff */
 
 static void
@@ -4578,10 +4774,17 @@ act_stage3_ip4_config_start (NMDevice *self,
 	else if (strcmp (method, NM_SETTING_IP4_CONFIG_METHOD_LINK_LOCAL) == 0)
 		ret = ipv4ll_start (self, reason);
 	else if (strcmp (method, NM_SETTING_IP4_CONFIG_METHOD_MANUAL) == 0) {
-		/* Use only IPv4 config from the connection data */
-		*out_config = nm_ip4_config_new (nm_device_get_ip_ifindex (self));
-		g_assert (*out_config);
-		ret = NM_ACT_STAGE_RETURN_SUCCESS;
+		NMIP4Config **configs, *config;
+
+		config = nm_ip4_config_new (nm_device_get_ip_ifindex (self));
+		nm_ip4_config_merge_setting (config,
+		                             nm_connection_get_setting_ip4_config (connection),
+		                             nm_device_get_ip4_route_metric (self));
+
+		configs = g_new0 (NMIP4Config *, 2);
+		configs[0] = config;
+		ipv4_dad_start (self, configs, ipv4_manual_method_apply);
+		ret = NM_ACT_STAGE_RETURN_POSTPONE;
 	} else if (strcmp (method, NM_SETTING_IP4_CONFIG_METHOD_SHARED) == 0) {
 		*out_config = shared4_new_config (self, connection, reason);
 		if (*out_config) {
@@ -6386,77 +6589,14 @@ start_sharing (NMDevice *self, NMIP4Config *config)
 }
 
 static void
-send_arps (NMDevice *self, const char *mode_arg)
-{
-	const char *argv[] = { NULL, mode_arg, "-q", "-I", nm_device_get_ip_iface (self), "-c", "1", NULL, NULL };
-	int ip_arg = G_N_ELEMENTS (argv) - 2;
-	NMConnection *connection;
-	NMSettingIPConfig *s_ip4;
-	int i, num;
-	NMIPAddress *addr;
-	GError *error = NULL;
-
-	connection = nm_device_get_applied_connection (self);
-	if (!connection)
-		return;
-	s_ip4 = nm_connection_get_setting_ip4_config (connection);
-	if (!s_ip4)
-		return;
-	num = nm_setting_ip_config_get_num_addresses (s_ip4);
-	if (num == 0)
-		return;
-
-	argv[0] = nm_utils_find_helper ("arping", NULL, NULL);
-	if (!argv[0]) {
-		_LOGW (LOGD_DEVICE | LOGD_IP4, "arping could not be found; no ARPs will be sent");
-		return;
-	}
-
-	for (i = 0; i < num; i++) {
-		gs_free char *tmp_str = NULL;
-		gboolean success;
-
-		addr = nm_setting_ip_config_get_address (s_ip4, i);
-		argv[ip_arg] = nm_ip_address_get_address (addr);
-
-		_LOGD (LOGD_DEVICE | LOGD_IP4,
-		       "arping: run %s", (tmp_str = g_strjoinv (" ", (char **) argv)));
-		success = g_spawn_async (NULL, (char **) argv, NULL,
-		                         G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL,
-		                         NULL, NULL, NULL, &error);
-		if (!success) {
-			_LOGW (LOGD_DEVICE | LOGD_IP4,
-			       "arping: could not send ARP for local address %s: %s",
-			       argv[ip_arg], error->message);
-			g_clear_error (&error);
-		}
-	}
-}
-
-static gboolean
-arp_announce_round2 (gpointer user_data)
-{
-	NMDevice *self = user_data;
-	NMDevicePrivate *priv;
-
-	g_return_val_if_fail (NM_IS_DEVICE (self), G_SOURCE_REMOVE);
-
-	priv = NM_DEVICE_GET_PRIVATE (self);
-	priv->arp_round2_id = 0;
-
-	if (   priv->state >= NM_DEVICE_STATE_IP_CONFIG
-	    && priv->state <= NM_DEVICE_STATE_ACTIVATED)
-		send_arps (self, "-U");
-
-	return G_SOURCE_REMOVE;
-}
-
-static void
 arp_cleanup (NMDevice *self)
 {
 	NMDevicePrivate *priv = NM_DEVICE_GET_PRIVATE (self);
 
-	nm_clear_g_source (&priv->arp_round2_id);
+	if (priv->arping.announcing) {
+		nm_arping_manager_reset (priv->arping.announcing);
+		g_clear_object (&priv->arping.announcing);
+	}
 }
 
 static void
@@ -6465,9 +6605,18 @@ arp_announce (NMDevice *self)
 	NMDevicePrivate *priv = NM_DEVICE_GET_PRIVATE (self);
 	NMConnection *connection;
 	NMSettingIPConfig *s_ip4;
-	int num;
+	int num, i;
+	const guint8 *hw_addr;
+	size_t hw_addr_len = 0;
 
 	arp_cleanup (self);
+
+	hw_addr = nm_platform_link_get_address (NM_PLATFORM_GET,
+	                                        nm_device_get_ip_ifindex (self),
+	                                        &hw_addr_len);
+
+	if (!hw_addr_len || !hw_addr)
+		return;
 
 	/* We only care about manually-configured addresses; DHCP- and autoip-configured
 	 * ones should already have been seen on the network at this point.
@@ -6482,8 +6631,17 @@ arp_announce (NMDevice *self)
 	if (num == 0)
 		return;
 
-	send_arps (self, "-A");
-	priv->arp_round2_id = g_timeout_add_seconds (2, arp_announce_round2, self);
+	priv->arping.announcing = nm_arping_manager_new (nm_device_get_ip_ifindex (self));
+
+	for (i = 0; i < nm_setting_ip_config_get_num_addresses (s_ip4); i++) {
+		NMIPAddress *ip = nm_setting_ip_config_get_address (s_ip4, i);
+		in_addr_t addr;
+
+		inet_pton (AF_INET, nm_ip_address_get_address (ip), &addr);
+		nm_arping_manager_add_address (priv->arping.announcing, addr);
+	}
+
+	nm_arping_manager_announce_addresses (priv->arping.announcing);
 }
 
 static void
@@ -10521,8 +10679,19 @@ dispose (GObject *object)
 	NMDevice *self = NM_DEVICE (object);
 	NMDevicePrivate *priv = NM_DEVICE_GET_PRIVATE (self);
 	NMPlatform *platform;
+	GSList *list;
 
 	_LOGD (LOGD_DEVICE, "disposing");
+
+	for (list = priv->arping.dad_list; list; list = list->next) {
+		nm_arping_manager_reset ((NMArpingManager *) list->data);
+		g_object_unref (list->data);
+	}
+
+	if (priv->arping.announcing) {
+		nm_arping_manager_reset (priv->arping.announcing);
+		g_object_unref (priv->arping.announcing);
+	}
 
 	g_signal_handlers_disconnect_by_func (nm_config_get (), config_changed_update_ignore_carrier, self);
 
