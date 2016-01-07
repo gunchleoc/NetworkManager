@@ -507,6 +507,7 @@ void nm_device_set_unmanaged_flags (NMDevice *device,
                                     gboolean unmanaged,
                                     NMDeviceStateReason reason);
 void nm_device_set_unmanaged_flags_by_device_spec (NMDevice *self, const GSList *unmanaged_specs);
+void nm_device_set_unmanaged_flags_user_udev (NMDevice *self, gboolean initial);
 void nm_device_set_unmanaged_flags_initial (NMDevice *device,
                                             NMUnmanagedFlags flag,
                                             gboolean unmanaged);

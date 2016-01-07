@@ -1192,12 +1192,9 @@ nm_device_finish_init (NMDevice *self)
 			 * Later we might want to manage 'lo' too. Currently that doesn't work because
 			 * NetworkManager might down the interface or remove the 127.0.0.1 address. */
 			nm_device_set_unmanaged_flags_initial (self, NM_UNMANAGED_LOOPBACK, TRUE);
-		} else if (priv->platform_link_initialized || (priv->is_nm_owned && nm_device_is_software (self))) {
-			gboolean platform_unmanaged = FALSE;
-
-			if (nm_platform_link_get_unmanaged (NM_PLATFORM_GET, priv->ifindex, &platform_unmanaged))
-				nm_device_set_unmanaged_flags_initial (self, NM_UNMANAGED_USER_UDEV, platform_unmanaged);
-		} else {
+		} else if (priv->platform_link_initialized || (priv->is_nm_owned && nm_device_is_software (self)))
+			nm_device_set_unmanaged_flags_user_udev (self, TRUE);
+		else {
 			/* Hardware and externally-created software links stay unmanaged
 			 * until they are fully initialized by the platform. NM created
 			 * links must be available for activation immediately and thus
@@ -1514,16 +1511,9 @@ device_link_changed (NMDevice *self)
 		update_dynamic_ip_setup (self);
 
 	if (priv->ifindex > 0 && !priv->platform_link_initialized && info.initialized) {
-		gboolean platform_unmanaged = FALSE;
-
 		priv->platform_link_initialized = TRUE;
 
-		if (nm_platform_link_get_unmanaged (NM_PLATFORM_GET, priv->ifindex, &platform_unmanaged)) {
-			nm_device_set_unmanaged_flags (self,
-			                               NM_UNMANAGED_USER_UDEV,
-			                               platform_unmanaged,
-			                               NM_DEVICE_STATE_REASON_USER_REQUESTED);
-		}
+		nm_device_set_unmanaged_flags_user_udev (self, FALSE);
 
 		nm_device_set_unmanaged_flags (self,
 		                               NM_UNMANAGED_PLATFORM_INIT,
@@ -8476,6 +8466,24 @@ nm_device_set_unmanaged_flags_by_device_spec (NMDevice *self, const GSList *unma
 	                               unmanaged
 	                                   ? NM_DEVICE_STATE_REASON_NOW_UNMANAGED
 	                                   : NM_DEVICE_STATE_REASON_NOW_MANAGED);
+}
+
+void
+nm_device_set_unmanaged_flags_user_udev (NMDevice *self, gboolean initial)
+{
+	int ifindex;
+	gboolean platform_unmanaged = FALSE;
+
+	ifindex = self->priv->ifindex;
+
+	if (   ifindex <= 0
+	    || !nm_platform_link_get_unmanaged (NM_PLATFORM_GET, ifindex, &platform_unmanaged))
+		return;
+
+	if (initial)
+		nm_device_set_unmanaged_flags_initial (self, NM_UNMANAGED_USER_UDEV, platform_unmanaged);
+	else
+		nm_device_set_unmanaged_flags (self, NM_UNMANAGED_USER_UDEV, platform_unmanaged, NM_DEVICE_STATE_REASON_USER_REQUESTED);
 }
 
 /**
