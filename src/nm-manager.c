@@ -2788,6 +2788,11 @@ _internal_activate_device (NMManager *self, NMActiveConnection *active, GError *
 	if (existing)
 		nm_device_steal_connection (existing, connection);
 
+	nm_device_set_unmanaged_flags (device,
+	                               NM_UNMANAGED_USER_EXPLICIT,
+	                               FALSE,
+	                               NM_DEVICE_STATE_REASON_USER_REQUESTED);
+
 	if (nm_device_get_state (device) == NM_DEVICE_STATE_UNMANAGED) {
 		nm_device_state_changed (device,
 		                         NM_DEVICE_STATE_UNAVAILABLE,
