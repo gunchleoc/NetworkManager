@@ -8769,7 +8769,10 @@ _clear_available_connections (NMDevice *self, gboolean do_signal)
 static gboolean
 _try_add_available_connection (NMDevice *self, NMConnection *connection)
 {
-	if (nm_device_check_connection_available (self, connection, NM_DEVICE_CHECK_CON_AVAILABLE_NONE, NULL)) {
+	if (nm_device_check_connection_available (self,
+	                                          connection,
+	                                          _NM_DEVICE_CHECK_CON_AVAILABLE_FOR_USER_REQUEST,
+	                                          NULL)) {
 		g_hash_table_add (NM_DEVICE_GET_PRIVATE (self)->available_connections,
 		                  g_object_ref (connection));
 		return TRUE;
