@@ -1715,6 +1715,8 @@ nm_device_realize (NMDevice *self,
 			return FALSE;
 	}
 
+	_LOGD (LOGD_DEVICE, "realize with ifindex %d", plink ? plink->ifindex : 0);
+
 	/* Try to realize the device from existing resources */
 	if (NM_DEVICE_GET_CLASS (self)->realize) {
 		if (!NM_DEVICE_GET_CLASS (self)->realize (self, plink, error))
