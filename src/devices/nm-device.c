@@ -3672,6 +3672,16 @@ arping_data_destroy (gpointer ptr)
 	}
 }
 
+static gboolean
+ipv4_fail_config_in_idle (gpointer user_data)
+{
+	nm_device_state_changed (NM_DEVICE (user_data), NM_DEVICE_STATE_FAILED,
+	                         NM_DEVICE_STATE_REASON_CONFIG_FAILED);
+	g_object_unref (user_data);
+
+	return G_SOURCE_REMOVE;
+}
+
 static void
 ipv4_manual_method_apply (NMDevice *self, NMIP4Config **configs, gboolean success)
 {
@@ -3681,8 +3691,12 @@ ipv4_manual_method_apply (NMDevice *self, NMIP4Config **configs, gboolean succes
 		empty = nm_ip4_config_new (nm_device_get_ip_ifindex (self));
 		nm_device_activate_schedule_ip4_config_result (self, empty);
 	} else {
-		nm_device_state_changed (self, NM_DEVICE_STATE_FAILED,
-		                         NM_DEVICE_STATE_REASON_CONFIG_FAILED);
+		/* This callback can run synchronously, called by ipv4_dad_start() and
+		 * act_stage3_ip4_config_start(); however the latter returns
+		 * NM_ACT_STAGE_RETURN_POSTPONE to signal that no change was done yet.
+		 * Defer the device state change.
+		 */
+		g_idle_add (ipv4_fail_config_in_idle, g_object_ref (self));
 	}
 }
 
