@@ -6605,7 +6605,7 @@ arp_announce (NMDevice *self)
 	NMDevicePrivate *priv = NM_DEVICE_GET_PRIVATE (self);
 	NMConnection *connection;
 	NMSettingIPConfig *s_ip4;
-	int num, i;
+	guint num, i;
 	const guint8 *hw_addr;
 	size_t hw_addr_len = 0;
 
@@ -6633,12 +6633,14 @@ arp_announce (NMDevice *self)
 
 	priv->arping.announcing = nm_arping_manager_new (nm_device_get_ip_ifindex (self));
 
-	for (i = 0; i < nm_setting_ip_config_get_num_addresses (s_ip4); i++) {
+	for (i = 0; i < num; i++) {
 		NMIPAddress *ip = nm_setting_ip_config_get_address (s_ip4, i);
 		in_addr_t addr;
 
-		inet_pton (AF_INET, nm_ip_address_get_address (ip), &addr);
-		nm_arping_manager_add_address (priv->arping.announcing, addr);
+		if (inet_pton (AF_INET, nm_ip_address_get_address (ip), &addr) == 1)
+			nm_arping_manager_add_address (priv->arping.announcing, addr);
+		else
+			g_warn_if_reached ();
 	}
 
 	nm_arping_manager_announce_addresses (priv->arping.announcing);
