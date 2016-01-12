@@ -103,7 +103,7 @@ nm_arping_manager_add_address (NMArpingManager *self, in_addr_t address)
 
 	info = g_slice_new0 (AddressInfo);
 	info->address = address;
-	info->manager = g_object_ref (self);
+	info->manager = self;
 
 	g_hash_table_insert (priv->addresses, GUINT_TO_POINTER (address), info);
 
@@ -409,7 +409,6 @@ destroy_address_info (gpointer data)
 		                           1000, NULL, NULL);
 	}
 
-	g_object_unref (info->manager);
 	g_slice_free (AddressInfo, info);
 }
 
