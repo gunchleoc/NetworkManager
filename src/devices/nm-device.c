@@ -3742,7 +3742,7 @@ ipv4_dad_start (NMDevice *self, NMIP4Config **configs, ArpingCallback cb)
 	const guint8 *hw_addr;
 	size_t hw_addr_len = 0;
 	GError *error = NULL;
-	int i, j;
+	guint i, j;
 
 	g_return_if_fail (NM_IS_DEVICE (self));
 	g_return_if_fail (configs);
