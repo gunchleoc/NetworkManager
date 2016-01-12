@@ -3716,7 +3716,7 @@ arping_manager_probe_terminated (NMArpingManager *arping_manager, ArpingData *da
 	data->callback (self, data->configs, success);
 
 	priv->arping.dad_list = g_slist_remove (priv->arping.dad_list, arping_manager);
-	g_object_unref (arping_manager);
+	nm_arping_manager_destroy (arping_manager);
 	g_object_unref (self);
 }
 
@@ -3805,7 +3805,7 @@ ipv4_dad_start (NMDevice *self, NMIP4Config **configs, ArpingCallback cb)
 
 		arping_data_destroy (data);
 		priv->arping.dad_list = g_slist_remove (priv->arping.dad_list, arping_manager);
-		g_object_unref (arping_manager);
+		nm_arping_manager_destroy (arping_manager);
 	}
 }
 
@@ -6594,8 +6594,8 @@ arp_cleanup (NMDevice *self)
 	NMDevicePrivate *priv = NM_DEVICE_GET_PRIVATE (self);
 
 	if (priv->arping.announcing) {
-		nm_arping_manager_reset (priv->arping.announcing);
-		g_clear_object (&priv->arping.announcing);
+		nm_arping_manager_destroy (priv->arping.announcing);
+		priv->arping.announcing = NULL;
 	}
 }
 
@@ -10688,10 +10688,7 @@ dispose (GObject *object)
 		g_object_unref (list->data);
 	}
 
-	if (priv->arping.announcing) {
-		nm_arping_manager_reset (priv->arping.announcing);
-		g_object_unref (priv->arping.announcing);
-	}
+	arp_cleanup (self);
 
 	g_signal_handlers_disconnect_by_func (nm_config_get (), config_changed_update_ignore_carrier, self);
 
