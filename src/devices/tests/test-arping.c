@@ -49,13 +49,6 @@ fixture_setup (test_fixture *fixture, gconstpointer user_data)
 	g_assert (nm_platform_link_set_up (NM_PLATFORM_GET, fixture->ifindex1, NULL));
 }
 
-static gboolean
-loop_quit (gpointer user_data)
-{
-	g_main_loop_quit ((GMainLoop *) user_data);
-	return G_SOURCE_REMOVE;
-}
-
 typedef struct {
 	in_addr_t addresses[8];
 	in_addr_t peer_addresses[8];
@@ -71,7 +64,7 @@ arping_manager_probe_terminated (NMArpingManager *arping_manager, GMainLoop *loo
 static void
 test_arping_common (test_fixture *fixture, TestInfo *info)
 {
-	NMArpingManager *manager;
+	gs_unref_object NMArpingManager *manager = NULL;
 	GMainLoop *loop;
 	int i;
 
@@ -95,11 +88,10 @@ test_arping_common (test_fixture *fixture, TestInfo *info)
 	                  G_CALLBACK (arping_manager_probe_terminated), NULL);
 
 	loop = g_main_loop_new (NULL, FALSE);
-	g_timeout_add_seconds (1, loop_quit, loop);
 	g_assert (nm_arping_manager_start_probe (manager, 100, loop,
 	                                         (GDestroyNotify) g_main_loop_unref,
 	                                         NULL));
-	g_main_loop_run (loop);
+	g_assert (nmtst_main_loop_run (loop, 1000));
 
 	for (i = 0; info->addresses[i]; i++) {
 		g_assert_cmpint (nm_arping_manager_check_address (manager, info->addresses[i]),
