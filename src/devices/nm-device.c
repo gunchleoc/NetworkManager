@@ -10679,14 +10679,11 @@ dispose (GObject *object)
 	NMDevice *self = NM_DEVICE (object);
 	NMDevicePrivate *priv = NM_DEVICE_GET_PRIVATE (self);
 	NMPlatform *platform;
-	GSList *list;
 
 	_LOGD (LOGD_DEVICE, "disposing");
 
-	for (list = priv->arping.dad_list; list; list = list->next) {
-		nm_arping_manager_reset ((NMArpingManager *) list->data);
-		g_object_unref (list->data);
-	}
+	g_slist_free_full (priv->arping.dad_list, (GDestroyNotify) nm_arping_manager_destroy);
+	priv->arping.dad_list = NULL;
 
 	arp_cleanup (self);
 
