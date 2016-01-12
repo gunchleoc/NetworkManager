@@ -280,6 +280,21 @@ nm_arping_manager_reset (NMArpingManager *self)
 }
 
 /**
+ * nm_arping_manager_destroy:
+ * @self: the #NMArpingManager
+ *
+ * Calls nm_arping_manager_reset() and unrefs @self.
+ */
+void
+nm_arping_manager_destroy (NMArpingManager *self)
+{
+	g_return_if_fail (NM_IS_ARPING_MANAGER (self));
+
+	nm_arping_manager_reset (self);
+	g_object_unref (self);
+}
+
+/**
  * nm_arping_manager_check_address:
  * @self: a #NMArpingManager
  * @address: an IP address

@@ -44,6 +44,7 @@ typedef struct {
 GType nm_arping_manager_get_type (void);
 
 NMArpingManager *nm_arping_manager_new (int ifindex);
+void nm_arping_manager_destroy (NMArpingManager *self);
 gboolean nm_arping_manager_add_address (NMArpingManager *self, in_addr_t address);
 gboolean nm_arping_manager_start_probe (NMArpingManager *self, guint timeout, void *user_data,
                                         GDestroyNotify user_data_destroy_func, GError **error);
