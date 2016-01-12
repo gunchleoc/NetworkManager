@@ -101,7 +101,7 @@ nm_arping_manager_add_address (NMArpingManager *self, in_addr_t address)
 		return FALSE;
 	}
 
-	info = g_new0 (AddressInfo, 1);
+	info = g_slice_new0 (AddressInfo);
 	info->address = address;
 	info->manager = g_object_ref (self);
 
@@ -410,7 +410,7 @@ destroy_address_info (gpointer data)
 	}
 
 	g_object_unref (info->manager);
-	g_free (info);
+	g_slice_free (AddressInfo, info);
 }
 
 static void
