@@ -3718,7 +3718,6 @@ arping_manager_probe_terminated (NMArpingManager *arping_manager, ArpingData *da
 
 	priv->arping.dad_list = g_slist_remove (priv->arping.dad_list, arping_manager);
 	nm_arping_manager_destroy (arping_manager);
-	g_object_unref (self);
 }
 
 /**
@@ -3777,13 +3776,16 @@ ipv4_dad_start (NMDevice *self, NMIP4Config **configs, ArpingCallback cb)
 		return;
 	}
 
+	/* don't take additional references of @arping_manager that outlive @self.
+	 * Otherwise, the callback can be invoked on a dangling pointer as we don't
+	 * disconnect the handler. */
 	arping_manager = nm_arping_manager_new (nm_device_get_ip_ifindex (self));
 	priv->arping.dad_list = g_slist_append (priv->arping.dad_list, arping_manager);
 
 	data = g_slice_new0 (ArpingData);
 	data->configs = configs;
 	data->callback = cb;
-	data->device = g_object_ref (self);
+	data->device = self;
 
 	for (i = 0; configs[i]; i++) {
 		for (j = 0; j < nm_ip4_config_get_num_addresses (configs[i]); j++) {
