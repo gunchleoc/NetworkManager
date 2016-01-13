@@ -40,8 +40,6 @@ typedef struct {
 	guint          completed;
 	guint          timer;
 	guint          round2_id;
-	void          *user_data;
-	GDestroyNotify user_data_destroy_func;
 } NMArpingManagerPrivate;
 
 typedef struct {
@@ -111,16 +109,6 @@ nm_arping_manager_add_address (NMArpingManager *self, in_addr_t address)
 }
 
 static void
-arping_notify_probe_terminated (NMArpingManager *self)
-{
-	NMArpingManagerPrivate *priv = NM_ARPING_MANAGER_GET_PRIVATE (self);
-
-	g_signal_emit (self, signals[PROBE_TERMINATED], 0, priv->user_data);
-	if (priv->user_data_destroy_func)
-		g_clear_pointer (&priv->user_data, priv->user_data_destroy_func);
-}
-
-static void
 arping_watch_cb (GPid pid, gint status, gpointer user_data)
 {
 	AddressInfo *info = user_data;
@@ -146,7 +134,7 @@ arping_watch_cb (GPid pid, gint status, gpointer user_data)
 	if (++priv->completed == g_hash_table_size (priv->addresses)) {
 		priv->state = STATE_PROBE_DONE;
 		nm_clear_g_source (&priv->timer);
-		arping_notify_probe_terminated (self);
+		g_signal_emit (self, signals[PROBE_TERMINATED], 0);
 	}
 }
 
@@ -173,7 +161,7 @@ arping_timeout_cb (gpointer user_data)
 	}
 
 	priv->state = STATE_PROBE_DONE;
-	arping_notify_probe_terminated (self);
+	g_signal_emit (self, signals[PROBE_TERMINATED], 0);
 
 	return G_SOURCE_REMOVE;
 }
@@ -182,21 +170,15 @@ arping_timeout_cb (gpointer user_data)
  * nm_arping_manager_start_probe:
  * @self: a #NMArpingManager
  * @timeout: maximum probe duration in milliseconds
- * @user_data: pointer to user data to be passed back to signal handler
- * @user_data_destroy_func: function to destroy @user_data
  * @error: location to store error, or %NULL
  *
  * Start probing IP addresses for duplicates; when the probe terminates a
- * PROBE_TERMINATED signal is emitted with @user_data as argument, then
- * @user_data is released using @user_data_destroy. When @self is destroyed or
- * reset, @user_data_destroy_func will be called on @user_data if the signal was
- * not emitted.
+ * PROBE_TERMINATED signal is emitted.
  *
  * Returns: %TRUE on success, %FALSE on failure
  */
 gboolean
-nm_arping_manager_start_probe (NMArpingManager *self, guint timeout, void *user_data,
-                               GDestroyNotify user_data_destroy_func, GError **error)
+nm_arping_manager_start_probe (NMArpingManager *self, guint timeout, GError **error)
 {
 	const char *argv[] = { NULL, "-D", "-q", "-I", NULL, "-c", NULL, "-w", NULL, NULL, NULL };
 	NMArpingManagerPrivate *priv;
@@ -215,8 +197,6 @@ nm_arping_manager_start_probe (NMArpingManager *self, guint timeout, void *user_
 	g_return_val_if_fail (argv[4], FALSE);
 
 	priv->completed = 0;
-	priv->user_data = user_data;
-	priv->user_data_destroy_func = user_data_destroy_func;
 
 	argv[0] = nm_utils_find_helper ("arping", NULL, NULL);
 	if (!argv[0]) {
@@ -271,11 +251,6 @@ nm_arping_manager_reset (NMArpingManager *self)
 	nm_clear_g_source (&priv->round2_id);
 	g_hash_table_remove_all (priv->addresses);
 
-	if (priv->user_data_destroy_func && priv->user_data)
-		priv->user_data_destroy_func (priv->user_data);
-
-	priv->user_data_destroy_func = NULL;
-	priv->user_data = NULL;
 	priv->state = STATE_INIT;
 }
 
@@ -461,7 +436,6 @@ nm_arping_manager_class_init (NMArpingManagerClass *klass)
 		g_signal_new (NM_ARPING_MANAGER_PROBE_TERMINATED,
 		              G_OBJECT_CLASS_TYPE (object_class),
 		              G_SIGNAL_RUN_FIRST,
-		              0, NULL, NULL,
-		              g_cclosure_marshal_VOID__POINTER,
-		              G_TYPE_NONE, 1, G_TYPE_POINTER);
+		              0, NULL, NULL, NULL,
+		              G_TYPE_NONE, 0);
 }
