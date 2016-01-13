@@ -3659,7 +3659,7 @@ get_ipv4_dad_timeout (NMDevice *self)
 }
 
 static void
-arping_data_destroy (gpointer ptr)
+arping_data_destroy (gpointer ptr, GClosure *closure)
 {
 	ArpingData *data = ptr;
 	int i;
@@ -3672,16 +3672,6 @@ arping_data_destroy (gpointer ptr)
 	}
 }
 
-static gboolean
-ipv4_fail_config_in_idle (gpointer user_data)
-{
-	nm_device_state_changed (NM_DEVICE (user_data), NM_DEVICE_STATE_FAILED,
-	                         NM_DEVICE_STATE_REASON_CONFIG_FAILED);
-	g_object_unref (user_data);
-
-	return G_SOURCE_REMOVE;
-}
-
 static void
 ipv4_manual_method_apply (NMDevice *self, NMIP4Config **configs, gboolean success)
 {
@@ -3690,18 +3680,15 @@ ipv4_manual_method_apply (NMDevice *self, NMIP4Config **configs, gboolean succes
 	if (success) {
 		empty = nm_ip4_config_new (nm_device_get_ip_ifindex (self));
 		nm_device_activate_schedule_ip4_config_result (self, empty);
+		g_object_unref (empty);
 	} else {
-		/* This callback can run synchronously, called by ipv4_dad_start() and
-		 * act_stage3_ip4_config_start(); however the latter returns
-		 * NM_ACT_STAGE_RETURN_POSTPONE to signal that no change was done yet.
-		 * Defer the device state change.
-		 */
-		g_idle_add (ipv4_fail_config_in_idle, g_object_ref (self));
+		nm_device_queue_state (self, NM_DEVICE_STATE_FAILED,
+		                       NM_DEVICE_STATE_REASON_CONFIG_FAILED);
 	}
 }
 
 static void
-arping_manager_probe_terminated (NMArpingManager *arping_manager, ArpingData *data, gpointer unused)
+arping_manager_probe_terminated (NMArpingManager *arping_manager, ArpingData *data)
 {
 	NMDevice *self;
 	NMDevicePrivate *priv;
@@ -3805,11 +3792,11 @@ ipv4_dad_start (NMDevice *self, NMIP4Config **configs, ArpingCallback cb)
 		}
 	}
 
-	g_signal_connect (arping_manager, NM_ARPING_MANAGER_PROBE_TERMINATED,
-	                  G_CALLBACK (arping_manager_probe_terminated), NULL);
+	g_signal_connect_data (arping_manager, NM_ARPING_MANAGER_PROBE_TERMINATED,
+	                       G_CALLBACK (arping_manager_probe_terminated), data,
+	                       arping_data_destroy, 0);
 
-	ret = nm_arping_manager_start_probe (arping_manager, timeout,
-	                                     data, arping_data_destroy, &error);
+	ret = nm_arping_manager_start_probe (arping_manager, timeout, &error);
 
 	if (!ret) {
 		_LOGW (LOGD_DEVICE, "arping probe failed: %s", error->message);
@@ -3817,7 +3804,6 @@ ipv4_dad_start (NMDevice *self, NMIP4Config **configs, ArpingCallback cb)
 		/* DAD could not be started, signal success */
 		cb (self, configs, TRUE);
 
-		arping_data_destroy (data);
 		priv->arping.dad_list = g_slist_remove (priv->arping.dad_list, arping_manager);
 		nm_arping_manager_destroy (arping_manager);
 	}
