@@ -3668,7 +3668,7 @@ arping_data_destroy (gpointer ptr, GClosure *closure)
 		for (i = 0; data->configs && data->configs[i]; i++)
 			g_object_unref (data->configs[i]);
 		g_free (data->configs);
-		g_free (data);
+		g_slice_free (ArpingData, data);
 	}
 }
 
@@ -3780,7 +3780,7 @@ ipv4_dad_start (NMDevice *self, NMIP4Config **configs, ArpingCallback cb)
 	arping_manager = nm_arping_manager_new (nm_device_get_ip_ifindex (self));
 	priv->arping.dad_list = g_slist_append (priv->arping.dad_list, arping_manager);
 
-	data = g_new0 (ArpingData, 1);
+	data = g_slice_new0 (ArpingData);
 	data->configs = configs;
 	data->callback = cb;
 	data->device = g_object_ref (self);
