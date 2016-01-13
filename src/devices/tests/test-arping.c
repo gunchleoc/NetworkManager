@@ -56,7 +56,7 @@ typedef struct {
 } TestInfo;
 
 static void
-arping_manager_probe_terminated (NMArpingManager *arping_manager, GMainLoop *loop, void *data)
+arping_manager_probe_terminated (NMArpingManager *arping_manager, GMainLoop *loop)
 {
 	g_main_loop_quit (loop);
 }
@@ -84,13 +84,10 @@ test_arping_common (test_fixture *fixture, TestInfo *info)
 		                        24, 0, 3600, 1800, NULL);
 	}
 
-	g_signal_connect (manager, NM_ARPING_MANAGER_PROBE_TERMINATED,
-	                  G_CALLBACK (arping_manager_probe_terminated), NULL);
-
 	loop = g_main_loop_new (NULL, FALSE);
-	g_assert (nm_arping_manager_start_probe (manager, 100, loop,
-	                                         (GDestroyNotify) g_main_loop_unref,
-	                                         NULL));
+	g_signal_connect (manager, NM_ARPING_MANAGER_PROBE_TERMINATED,
+	                  G_CALLBACK (arping_manager_probe_terminated), loop);
+	g_assert (nm_arping_manager_start_probe (manager, 100, NULL));
 	g_assert (nmtst_main_loop_run (loop, 1000));
 
 	for (i = 0; info->addresses[i]; i++) {
@@ -98,6 +95,8 @@ test_arping_common (test_fixture *fixture, TestInfo *info)
 		                 ==,
 		                 info->expected_result[i]);
 	}
+
+	g_main_loop_unref (loop);
 }
 
 static void
