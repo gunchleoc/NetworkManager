@@ -26,6 +26,7 @@
 #include <sys/wait.h>
 #include <teamdctl.h>
 #include <stdlib.h>
+#include <jansson.h>
 
 #include "nm-default.h"
 #include "nm-device-team.h"
@@ -56,6 +57,7 @@ typedef struct {
 } NMDeviceTeamPrivate;
 
 static gboolean teamd_start (NMDevice *device, NMSettingTeam *s_team);
+static gboolean ensure_teamd_connection (NMDevice *device);
 
 /******************************************************************/
 
@@ -84,10 +86,46 @@ check_connection_available (NMDevice *device,
 }
 
 static gboolean
+team_config_equal (const char *conf1, const char *conf2)
+{
+	json_t *json1, *json2;
+	json_error_t jerror;
+	char *dump1, *dump2;
+	const char *key;
+	json_t *value;
+
+	json1 = json_loads (conf1, 0, &jerror);
+	json2 = json_loads (conf2, 0, &jerror);
+
+	if (!json1 || !json2)
+		return g_strcmp0 (conf1, conf2);
+
+	json_object_foreach (json1, key, value) {
+		if (   g_strcmp0 (key, "runner")
+		    && g_strcmp0 (key, "link_watch"))
+			json_object_del (json1, key);
+	}
+
+	json_object_foreach (json2, key, value) {
+		if (   g_strcmp0 (key, "runner")
+		    && g_strcmp0 (key, "link_watch"))
+			json_object_del (json2, key);
+	}
+
+	dump1 = json_dumps (json1, JSON_INDENT(0) | JSON_ENSURE_ASCII | JSON_SORT_KEYS);
+	dump2 = json_dumps (json2, JSON_INDENT(0) | JSON_ENSURE_ASCII | JSON_SORT_KEYS);
+
+	return !strcmp (dump1, dump2);
+}
+
+static gboolean
 check_connection_compatible (NMDevice *device, NMConnection *connection)
 {
+	NMDeviceTeamPrivate *priv = NM_DEVICE_TEAM_GET_PRIVATE (device);
 	const char *iface;
 	NMSettingTeam *s_team;
+	const char *config = NULL;
+	int err;
 
 	if (!NM_DEVICE_CLASS (nm_device_team_parent_class)->check_connection_compatible (device, connection))
 		return FALSE;
@@ -101,7 +139,14 @@ check_connection_compatible (NMDevice *device, NMConnection *connection)
 	if (!iface || strcmp (nm_device_get_iface (device), iface))
 		return FALSE;
 
-	/* FIXME: match team properties like mode, etc? */
+	/* Check for compatible configuration */
+	if (ensure_teamd_connection (device)) {
+		err = teamdctl_config_get_raw_direct (priv->tdc, (char **) &config);
+		if (!err) {
+			if (!team_config_equal (nm_setting_team_get_config (s_team), config))
+				return FALSE;
+		}
+	}
 
 	return TRUE;
 }
