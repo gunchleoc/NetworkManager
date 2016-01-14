@@ -17,7 +17,7 @@ if WITH_WIFI
 SUBDIRS += devices/wifi
 endif
 
-if WITH_TEAMDCTL
+if WITH_TEAM
 SUBDIRS += devices/team
 endif
 

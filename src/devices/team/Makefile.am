@@ -17,7 +17,7 @@ AM_CPPFLAGS = \
 	-DNM_VERSION_MAX_ALLOWED=NM_VERSION_NEXT_STABLE \
 	$(GLIB_CFLAGS)
 
-if WITH_TEAMDCTL
+if WITH_TEAM
 AM_CPPFLAGS += ${LIBTEAMDCTL_CFLAGS}
 endif
 
@@ -40,7 +40,7 @@ libnm_device_plugin_team_la_LIBADD = \
 	$(GLIB_LIBS) \
 	$(GUDEV_LIBS)
 
-if WITH_TEAMDCTL
+if WITH_TEAM
 libnm_device_plugin_team_la_LIBADD += $(LIBTEAMDCTL_LIBS)
 endif
 

@@ -530,21 +530,22 @@ PKG_CHECK_MODULES(LIBNL, libnl-3.0 >= 3.2.8)
 # uuid library
 PKG_CHECK_MODULES(UUID, uuid)
 
-# Teamd control checks
+# Team control checks
 PKG_CHECK_MODULES(LIBTEAMDCTL, [libteamdctl >= 1.9], [have_teamdctl=yes],[have_teamdctl=no])
-AC_ARG_ENABLE(teamdctl, AS_HELP_STRING([--enable-teamdctl], [enable Teamd control support]),
-                     [enable_teamdctl=${enableval}], [enable_teamdctl=${have_teamdctl}])
-if (test "${enable_teamdctl}" = "yes"); then
+
+AC_ARG_ENABLE(team, AS_HELP_STRING([--enable-team], [enable Team support]),
+                     [enable_team=${enableval}], [enable_team=${have_teamdctl}])
+if (test "${enable_team}" = "yes"); then
 	if test x"$have_teamdctl" = x"no"; then
 		AC_MSG_ERROR(Teamd control is required)
 	fi
 	# temporary bug workaround
 	LIBTEAMDCTL_CFLAGS=`echo $LIBTEAMDCTL_CFLAGS | sed -e 's:/teamdctl.h::'`
-	AC_DEFINE(WITH_TEAMDCTL, 1, [Define if you have Teamd control support])
+	AC_DEFINE(WITH_TEAM, 1, [Define if you have Team support])
 else
-	AC_DEFINE(WITH_TEAMDCTL, 0, [Define if you have Teamd control support])
+	AC_DEFINE(WITH_TEAM, 0, [Define if you have Team support])
 fi
-AM_CONDITIONAL(WITH_TEAMDCTL, test "${enable_teamdctl}" = "yes")
+AM_CONDITIONAL(WITH_TEAM, test "${enable_team}" = "yes")
 
 # we usually compile with polkit support. --enable-polkit=yes|no only sets the
 # default configuration for main.auth-polkit. User can always enable/disable polkit
@@ -1142,7 +1143,7 @@ echo "  wifi: $enable_wifi"
 echo "  ppp: $enable_ppp"
 echo "  modemmanager-1: $with_modem_manager_1"
 echo "  concheck: $enable_concheck"
-echo "  libteamdctl: $enable_teamdctl"
+echo "  team: $enable_team"
 echo "  libnm-glib: $with_libnm_glib"
 echo "  nmcli: $build_nmcli"
 echo "  nmtui: $build_nmtui"
