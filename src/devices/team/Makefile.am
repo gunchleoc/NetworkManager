@@ -18,7 +18,7 @@ AM_CPPFLAGS = \
 	$(GLIB_CFLAGS)
 
 if WITH_TEAM
-AM_CPPFLAGS += ${LIBTEAMDCTL_CFLAGS}
+AM_CPPFLAGS += $(LIBTEAMDCTL_CFLAGS) $(JANSSON_CFLAGS)
 endif
 
 pkglib_LTLIBRARIES = libnm-device-plugin-team.la
@@ -41,7 +41,7 @@ libnm_device_plugin_team_la_LIBADD = \
 	$(GUDEV_LIBS)
 
 if WITH_TEAM
-libnm_device_plugin_team_la_LIBADD += $(LIBTEAMDCTL_LIBS)
+libnm_device_plugin_team_la_LIBADD += $(LIBTEAMDCTL_LIBS) $(JANSSON_LIBS)
 endif
 
 EXTRA_DIST = $(SYMBOL_VIS_FILE)

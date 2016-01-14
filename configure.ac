@@ -532,12 +532,22 @@ PKG_CHECK_MODULES(UUID, uuid)
 
 # Team control checks
 PKG_CHECK_MODULES(LIBTEAMDCTL, [libteamdctl >= 1.9], [have_teamdctl=yes],[have_teamdctl=no])
+PKG_CHECK_MODULES(JANSSON, [jansson], [have_jansson=yes],[have_jansson=no])
+
+if test "$have_teamdctl" = "yes" -a "$have_jansson" = "yes"; then
+	have_team_prereq=yes
+else
+	have_team_prereq=no
+fi
 
 AC_ARG_ENABLE(team, AS_HELP_STRING([--enable-team], [enable Team support]),
-                     [enable_team=${enableval}], [enable_team=${have_teamdctl}])
+                     [enable_team=${enableval}], [enable_team=${have_team_prereq}])
 if (test "${enable_team}" = "yes"); then
 	if test x"$have_teamdctl" = x"no"; then
 		AC_MSG_ERROR(Teamd control is required)
+	fi
+	if test x"$have_jansson" = x"no"; then
+		AC_MSG_ERROR(Jansson is required)
 	fi
 	# temporary bug workaround
 	LIBTEAMDCTL_CFLAGS=`echo $LIBTEAMDCTL_CFLAGS | sed -e 's:/teamdctl.h::'`
