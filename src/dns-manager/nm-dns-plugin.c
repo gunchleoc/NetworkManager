@@ -133,6 +133,8 @@ watch_cb (GPid pid, gint status, gpointer user_data)
 	g_free (priv->progname);
 	priv->progname = NULL;
 
+	nm_clear_g_source (&priv->watch_id);
+
 	g_signal_emit (self, signals[CHILD_QUIT], 0, status);
 }
 
