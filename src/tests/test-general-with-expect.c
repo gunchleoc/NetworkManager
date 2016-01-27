@@ -234,7 +234,7 @@ test_nm_utils_kill_child (void)
 	char *argv1[] = {
 			"sh",
 			"-c",
-			"trap \"sleep 0.3; exit 10\" EXIT; "
+			"trap \"sleep 1; exit 10\" EXIT; "
 			"sleep 100000; exit $? #" TEST_TOKEN,
 			NULL,
 		};
