@@ -26,6 +26,7 @@
 #include <arpa/inet.h>
 
 #include "nm-default.h"
+#include "nm-macros-internal.h"
 #include "nm-setting-ip-config.h"
 #include "nm-setting-ip4-config.h"
 #include "nm-setting-ip6-config.h"
@@ -674,6 +675,29 @@ nm_ip_route_unref (NMIPRoute *route)
 	}
 }
 
+static gboolean
+_route_equal (NMIPRoute *route, NMIPRoute *other, gboolean exact)
+{
+	g_return_val_if_fail (route != NULL, FALSE);
+	g_return_val_if_fail (route->refcount > 0, FALSE);
+
+	g_return_val_if_fail (other != NULL, FALSE);
+	g_return_val_if_fail (other->refcount > 0, FALSE);
+
+	if (   route->prefix != other->prefix
+	    || strcmp (route->dest, other->dest) != 0
+	    || g_strcmp0 (route->next_hop, other->next_hop) != 0)
+		return FALSE;
+
+	if (route->metric != other->metric) {
+		if (   exact
+		    || (route->metric != -1 && other->metric != -1))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 /**
  * nm_ip_route_equal:
  * @route: the #NMIPRoute
@@ -687,18 +711,7 @@ nm_ip_route_unref (NMIPRoute *route)
 gboolean
 nm_ip_route_equal (NMIPRoute *route, NMIPRoute *other)
 {
-	g_return_val_if_fail (route != NULL, FALSE);
-	g_return_val_if_fail (route->refcount > 0, FALSE);
-
-	g_return_val_if_fail (other != NULL, FALSE);
-	g_return_val_if_fail (other->refcount > 0, FALSE);
-
-	if (   route->prefix != other->prefix
-	    || route->metric != other->metric
-	    || strcmp (route->dest, other->dest) != 0
-	    || g_strcmp0 (route->next_hop, other->next_hop) != 0)
-		return FALSE;
-	return TRUE;
+	return _route_equal (route, other, TRUE);
 }
 
 /**
@@ -2424,6 +2437,36 @@ ip_gateway_set (NMSetting  *setting,
 	g_object_set (setting, property, g_variant_get_string (value, NULL), NULL);
 }
 
+static gboolean
+compare_property (NMSetting *setting,
+                  NMSetting *other,
+                  const GParamSpec *prop_spec,
+                  NMSettingCompareFlags flags)
+{
+	NMSettingClass *setting_class = NM_SETTING_CLASS (nm_setting_ip_config_parent_class);
+	NMSettingIPConfigPrivate *priv1, *priv2;
+	guint i;
+
+	if (!g_strcmp0 (prop_spec->name, NM_SETTING_IP_CONFIG_ROUTES)) {
+		priv1 = NM_SETTING_IP_CONFIG_GET_PRIVATE (setting);
+		priv2 = NM_SETTING_IP_CONFIG_GET_PRIVATE (other);
+
+		if (priv1->routes->len != priv2->routes->len)
+			return FALSE;
+
+		for (i = 0; i < priv1->routes->len; i++) {
+			if (!_route_equal (priv1->routes->pdata[i],
+			                   priv2->routes->pdata[i],
+			                   !NM_FLAGS_HAS (flags, NM_SETTING_COMPARE_FLAG_INFERRABLE)))
+				return FALSE;
+		}
+
+		return TRUE;
+	}
+
+	return setting_class->compare_property (setting, other, prop_spec, flags);
+}
+
 static void
 nm_setting_ip_config_class_init (NMSettingIPConfigClass *setting_class)
 {
@@ -2436,7 +2479,9 @@ nm_setting_ip_config_class_init (NMSettingIPConfigClass *setting_class)
 	object_class->set_property = set_property;
 	object_class->get_property = get_property;
 	object_class->finalize     = finalize;
-	parent_class->verify       = verify;
+
+	parent_class->compare_property = compare_property;
+	parent_class->verify           = verify;
 
 	/* Properties */
 

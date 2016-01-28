@@ -4058,6 +4058,52 @@ test_setting_compare_default_strv (void)
 }
 
 static void
+test_setting_ip_config_compare (void)
+{
+	NMSettingIPConfig *s_ip1, *s_ip2;
+	gboolean compare;
+	GHashTable *out_settings = NULL;
+	NMIPRoute *route1, *route2;
+	NMIPAddress *address;
+	GError *error = NULL;
+
+	s_ip1 = (NMSettingIPConfig *) nm_setting_ip4_config_new ();
+	s_ip2 = (NMSettingIPConfig *) nm_setting_ip4_config_new ();
+
+	address = nm_ip_address_new (AF_INET, "10.0.0.1", 24, &error);
+	g_assert_no_error (error);
+	g_assert (nm_setting_ip_config_add_address (s_ip1, address));
+	g_assert (nm_setting_ip_config_add_address (s_ip2, address));
+
+	route1 = nm_ip_route_new (AF_INET, "172.25.16.0", 24, "10.0.0.2", 100, &error);
+	g_assert_no_error (error);
+	g_assert (nm_setting_ip_config_add_route (s_ip1, route1));
+
+	route2 = nm_ip_route_new (AF_INET, "172.25.16.0", 24, "10.0.0.2", -1, &error);
+	g_assert_no_error (error);
+	g_assert (nm_setting_ip_config_add_route (s_ip2, route2));
+
+	compare = nm_setting_diff ((NMSetting *) s_ip1, (NMSetting *) s_ip2,
+	                           NM_SETTING_COMPARE_FLAG_EXACT, FALSE, &out_settings);
+	g_assert (!compare);
+	g_assert (out_settings);
+	g_assert (g_hash_table_contains (out_settings, NM_SETTING_IP_CONFIG_ROUTES));
+	g_hash_table_unref (out_settings);
+	out_settings = NULL;
+
+	compare = nm_setting_diff ((NMSetting *) s_ip1, (NMSetting *) s_ip2,
+	                           NM_SETTING_COMPARE_FLAG_INFERRABLE, FALSE, &out_settings);
+	g_assert (compare);
+	g_assert (!out_settings);
+
+	nm_ip_route_unref (route1);
+	nm_ip_route_unref (route2);
+	nm_ip_address_unref (address);
+	g_object_unref (s_ip1);
+	g_object_unref (s_ip2);
+}
+
+static void
 test_hexstr2bin (void)
 {
 	static const HexItem items[] = {
@@ -4993,6 +5039,7 @@ int main (int argc, char **argv)
 	g_test_add_func ("/core/general/test_setting_ip4_gateway", test_setting_ip4_gateway);
 	g_test_add_func ("/core/general/test_setting_ip6_gateway", test_setting_ip6_gateway);
 	g_test_add_func ("/core/general/test_setting_compare_default_strv", test_setting_compare_default_strv);
+	g_test_add_func ("/core/general/test_setting_ip_config_compare", test_setting_ip_config_compare);
 
 	g_test_add_func ("/core/general/hexstr2bin", test_hexstr2bin);
 	g_test_add_func ("/core/general/test_nm_utils_uuid_generate_from_string", test_nm_utils_uuid_generate_from_string);
